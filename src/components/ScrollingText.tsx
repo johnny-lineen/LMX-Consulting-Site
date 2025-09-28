@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react'
+﻿import { useEffect, useRef } from 'react'
 
 /**
  * ScrollingText
  * - Infinite horizontal marquee of benefits
- * - Dots (•) separate each item
+ * - Dots (â€¢) separate each item
  */
 export default function ScrollingText({ items }: { items: string[] }) {
     const ref = useRef<HTMLDivElement>(null)
@@ -13,7 +13,7 @@ export default function ScrollingText({ items }: { items: string[] }) {
             const el = ref.current
             let start = 0
 
-            // ✅ FIX: arrow function instead of function declaration
+            // âœ… FIX: arrow function instead of function declaration
             const step = () => {
                 start -= 1
                 if (Math.abs(start) >= el.scrollWidth / 2) {
@@ -37,7 +37,7 @@ export default function ScrollingText({ items }: { items: string[] }) {
                 {[...items, ...items].map((item, i) => (
                     <span key={i} className="flex items-center gap-2">
                         {item}
-                        <span className="text-muted">•</span>
+                        <span className="text-muted">â€¢</span>
                     </span>
                 ))}
             </div>
