@@ -2,8 +2,8 @@
 
 /**
  * ScrollingText
- * - Creates an infinite horizontal marquee of short benefits
- * - Dots separate each item
+ * - Infinite horizontal marquee of benefits
+ * - Dots (•) separate each item
  */
 export default function ScrollingText({ items }: { items: string[] }) {
     const ref = useRef<HTMLDivElement>(null)
@@ -12,7 +12,9 @@ export default function ScrollingText({ items }: { items: string[] }) {
         if (ref.current) {
             const el = ref.current
             let start = 0
-            function step() {
+
+            // ✅ FIX: arrow function instead of function declaration
+            const step = () => {
                 start -= 1
                 if (Math.abs(start) >= el.scrollWidth / 2) {
                     start = 0
@@ -20,6 +22,7 @@ export default function ScrollingText({ items }: { items: string[] }) {
                 el.style.transform = `translateX(${start}px)`
                 requestAnimationFrame(step)
             }
+
             step()
         }
     }, [])
@@ -31,14 +34,14 @@ export default function ScrollingText({ items }: { items: string[] }) {
                 className="flex whitespace-nowrap gap-8 text-lg font-medium text-primary"
                 style={{ willChange: 'transform' }}
             >
-                {/* Repeat twice for seamless looping */}
                 {[...items, ...items].map((item, i) => (
                     <span key={i} className="flex items-center gap-2">
                         {item}
-                        <span className="text-muted"> </span>
+                        <span className="text-muted">•</span>
                     </span>
                 ))}
             </div>
         </div>
     )
 }
+
