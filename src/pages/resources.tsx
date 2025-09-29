@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout'
+import ProtectedRoute from '@/components/ProtectedRoute'
 
 /**
  * Resources page
@@ -28,39 +29,41 @@ export default function ResourcesPage() {
     ]
 
     return (
-        <Layout
-            title="Resources"
-            description="Premium toolkits and templates—free with consultation."
-        >
-            <section className="container-px max-w-7xl mx-auto py-12 md:py-16">
-                <h1 className="text-3xl font-bold">Resources</h1>
-                <p className="text-muted mt-2">
-                    These assets are priced for framing. Book a consultation to receive the relevant pack for free.
-                </p>
+        <ProtectedRoute>
+            <Layout
+                title="Resources"
+                description="Premium toolkits and templates—free with consultation."
+            >
+                <section className="container-px max-w-7xl mx-auto py-12 md:py-16">
+                    <h1 className="text-3xl font-bold">Resources</h1>
+                    <p className="text-muted mt-2">
+                        These assets are priced for framing. Book a consultation to receive the relevant pack for free.
+                    </p>
 
-                <div className="grid gap-6 md:grid-cols-3 mt-6">
-                    {items.map((item) => (
-                        <a
-                            key={item.title}
-                            href={item.href}
-                            className="p-6 rounded-2xl border hover:shadow-soft transition block"
-                        >
-                            <h3 className="text-lg font-semibold">{item.title}</h3>
-                            <p className="text-sm text-muted mt-1">{item.desc}</p>
+                    <div className="grid gap-6 md:grid-cols-3 mt-6">
+                        {items.map((item) => (
+                            <a
+                                key={item.title}
+                                href={item.href}
+                                className="p-6 rounded-2xl border hover:shadow-soft transition block"
+                            >
+                                <h3 className="text-lg font-semibold">{item.title}</h3>
+                                <p className="text-sm text-muted mt-1">{item.desc}</p>
 
-                            {/* FIX: replaced Python-style .format with JS .toLocaleString() */}
-                            <p className="mt-3 font-semibold">
-                                ${item.price.toLocaleString()}
-                            </p>
+                                {/* FIX: replaced Python-style .format with JS .toLocaleString() */}
+                                <p className="mt-3 font-semibold">
+                                    ${item.price.toLocaleString()}
+                                </p>
 
-                            <p className="text-xs text-muted mt-1">
-                                Included free with consultation
-                            </p>
-                        </a>
-                    ))}
-                </div>
-            </section>
-        </Layout>
+                                <p className="text-xs text-muted mt-1">
+                                    Included free with consultation
+                                </p>
+                            </a>
+                        ))}
+                    </div>
+                </section>
+            </Layout>
+        </ProtectedRoute>
     )
 }
 
