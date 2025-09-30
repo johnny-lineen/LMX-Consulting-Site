@@ -26,43 +26,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    await connectDB();
+    // DISABLED: Insights feature removed - return empty data
+    // await connectDB();
+    // const userInsights = await UserInsights.findOne({ userId });
 
-    // Fetch user insights
-    const userInsights = await UserInsights.findOne({ userId });
-
-    if (!userInsights) {
-      // Cache empty responses to reduce spam
-      res.setHeader('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
-      return res.status(200).json({
-        success: true,
-        userId,
-        insights: null,
-        message: 'No insights found for this user'
-      });
-    }
-
-    // Add caching headers based on last update time
-    const lastModified = userInsights.updatedAt || userInsights.createdAt;
-    const etag = `"${userInsights._id}-${lastModified.getTime()}"`;
-    
-    res.setHeader('Cache-Control', 'public, max-age=5, must-revalidate');
-    res.setHeader('ETag', etag);
-    res.setHeader('Last-Modified', lastModified.toUTCString());
-    
-    // Check if client has cached version
-    const ifNoneMatch = req.headers['if-none-match'];
-    const ifModifiedSince = req.headers['if-modified-since'];
-    
-    if (ifNoneMatch === etag || 
-        (ifModifiedSince && new Date(ifModifiedSince) >= lastModified)) {
-      return res.status(304).end();
-    }
-
+    // Return empty insights to keep UI functional
+    res.setHeader('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
     return res.status(200).json({
       success: true,
       userId,
-      insights: userInsights
+      insights: null,
+      message: 'Insights feature is currently disabled'
     });
 
   } catch (error: unknown) {

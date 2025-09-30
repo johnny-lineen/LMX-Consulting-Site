@@ -24,22 +24,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await connectDB();
 
-    // Fetch conversation and insights
-    const [conversation, conversationInsights] = await Promise.all([
-      Conversation.findOne({ 
-        conversationId,
-        userId: currentUser.userId 
-      }),
-      ConversationInsights.findOne({ 
-        conversationId,
-        userId: currentUser.userId 
-      })
-    ]);
+    // Fetch conversation only (insights disabled)
+    const conversation = await Conversation.findOne({ 
+      conversationId,
+      userId: currentUser.userId 
+    });
 
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
+    // DISABLED: Insights feature removed - return empty insights
     return res.status(200).json({
       success: true,
       conversationId,
@@ -48,9 +43,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         createdAt: conversation.createdAt,
         updatedAt: conversation.updatedAt
       },
-      insights: conversationInsights?.insights || [],
-      insightsCreatedAt: conversationInsights?.createdAt,
-      insightsUpdatedAt: conversationInsights?.updatedAt
+      insights: [], // Empty insights array
+      insightsCreatedAt: null,
+      insightsUpdatedAt: null
     });
 
   } catch (error: unknown) {

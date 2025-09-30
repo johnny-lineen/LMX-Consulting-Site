@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
 import { Conversation } from '@/models/Conversation';
 import { getCurrentUser } from '@/utils/auth';
-import { processInsightsPipeline } from '@/lib/insightPipeline';
+// import { processInsightsPipeline } from '@/lib/insightPipeline'; // DISABLED: Insights removed
 import { generateChatResponse } from '@/lib/gptChatService';
 
 /**
@@ -86,15 +86,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     conversation.updatedAt = new Date();
     await conversation.save();
 
-    // Process insights asynchronously (don't wait for completion)
-    processInsightsPipeline(
-      conversationId, 
-      currentUser.userId, 
-      assistantResponse,
-      conversationHistory
-    ).catch(error => {
-      console.error('Insight processing failed:', error);
-    });
+    // DISABLED: Insight processing removed
+    // processInsightsPipeline(
+    //   conversationId, 
+    //   currentUser.userId, 
+    //   assistantResponse,
+    //   conversationHistory
+    // ).catch(error => {
+    //   console.error('Insight processing failed:', error);
+    // });
 
     // Step 5: Return assistant's reply
     return res.status(200).json({

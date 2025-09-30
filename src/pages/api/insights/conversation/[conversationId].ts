@@ -21,46 +21,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    await connectDB();
+    // DISABLED: Insights feature removed - return empty data
+    // await connectDB();
+    // const conversationInsights = await ConversationInsights.findOne({...});
 
-    // Fetch conversation insights
-    const conversationInsights = await ConversationInsights.findOne({
-      conversationId,
-      userId: currentUser.userId
-    });
-
-    if (!conversationInsights) {
-      // Cache empty responses to reduce spam
-      res.setHeader('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
-      return res.status(200).json({
-        success: true,
-        conversationId,
-        insights: null,
-        message: 'No insights found for this conversation'
-      });
-    }
-
-    // Add caching headers based on last update time
-    const lastModified = conversationInsights.updatedAt || conversationInsights.createdAt;
-    const etag = `"${conversationInsights._id}-${lastModified.getTime()}"`;
-    
-    res.setHeader('Cache-Control', 'public, max-age=5, must-revalidate');
-    res.setHeader('ETag', etag);
-    res.setHeader('Last-Modified', lastModified.toUTCString());
-    
-    // Check if client has cached version
-    const ifNoneMatch = req.headers['if-none-match'];
-    const ifModifiedSince = req.headers['if-modified-since'];
-    
-    if (ifNoneMatch === etag || 
-        (ifModifiedSince && new Date(ifModifiedSince) >= lastModified)) {
-      return res.status(304).end();
-    }
-
+    // Return empty insights to keep UI functional
+    res.setHeader('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
     return res.status(200).json({
       success: true,
       conversationId,
-      insights: conversationInsights
+      insights: null,
+      message: 'Insights feature is currently disabled'
     });
 
   } catch (error: unknown) {
