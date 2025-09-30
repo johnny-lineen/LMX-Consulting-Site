@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating test conversation:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }

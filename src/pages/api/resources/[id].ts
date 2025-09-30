@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       return res.status(200).json({ resource });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching resource:', error);
       return res.status(500).json({ error: 'Failed to fetch resource' });
     }
@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await Resource.findByIdAndDelete(id);
 
       return res.status(200).json({ success: true, message: 'Resource deleted' });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error deleting resource:', error);
       return res.status(500).json({ error: 'Failed to delete resource' });
     }

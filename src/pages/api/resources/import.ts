@@ -103,7 +103,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Resource imported successfully'
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Import error:', error);
     return res.status(500).json({ error: 'Failed to import resource' });
   }

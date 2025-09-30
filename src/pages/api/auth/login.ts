@@ -49,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Login successful'
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Login error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }

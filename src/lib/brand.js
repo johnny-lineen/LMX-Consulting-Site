@@ -2,7 +2,31 @@
 // Tweak your brand here once and the whole site updates.
 // Colors are Tailwind-ready via tailwind.config.js
 
-/** @type {{name: string, tagline: string, colors: any, nav: Array<{label:string, href:string}>}} */
+/**
+ * @typedef {Object} NavItem
+ * @property {string} label
+ * @property {string} href
+ */
+
+/**
+ * @typedef {Object} BrandColors
+ * @property {string} primary
+ * @property {string} secondary
+ * @property {string} accent
+ * @property {string} muted
+ * @property {string} foreground
+ * @property {string} background
+ */
+
+/**
+ * @typedef {Object} BrandConfig
+ * @property {string} name
+ * @property {string} tagline
+ * @property {BrandColors} colors
+ * @property {Array<NavItem>} nav
+ */
+
+/** @type {BrandConfig} */
 const brand = {
   name: "LMX Consulting",
   tagline: "Harness AI to save 10+ hours/week in Microsoft 365",

@@ -177,7 +177,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Conversation started successfully'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Catch-all error handler
     console.error('[conversation/start] Unexpected error:', error);
     console.error('[conversation/start] Error stack:', error.stack);

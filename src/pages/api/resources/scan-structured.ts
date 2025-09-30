@@ -78,7 +78,7 @@ async function scanStructuredFolders(): Promise<StructuredResource[]> {
           const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
           metadata = JSON.parse(metadataContent);
           console.log(`[SCAN STRUCTURED] ✓ Read metadata for: ${slug}`);
-        } catch (error) {
+        } catch (error: unknown) {
           console.log(`[SCAN STRUCTURED] Could not read metadata for: ${slug}`);
         }
       }

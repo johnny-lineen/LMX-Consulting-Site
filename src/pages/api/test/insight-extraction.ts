@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       count: insights.length
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error testing insight extraction:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }

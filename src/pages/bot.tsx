@@ -60,7 +60,7 @@ export default function BotPage() {
 
     try {
       await sendMessage(messageText);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error sending message:', error);
       setInputValue(messageText);
     } finally {

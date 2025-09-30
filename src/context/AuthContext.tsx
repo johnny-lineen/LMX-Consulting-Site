@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Auth check failed:', error);
       setUser(null);
     } finally {
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         return { success: false, error: data.error };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       return { success: false, error: 'Network error' };
     }
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         return { success: false, error: data.error };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Signup error:', error);
       return { success: false, error: 'Network error' };
     }
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Logout error:', error);
     }
   };

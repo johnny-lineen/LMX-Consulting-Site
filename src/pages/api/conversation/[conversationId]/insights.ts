@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       insightsUpdatedAt: conversationInsights?.updatedAt
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching conversation with insights:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }

@@ -155,7 +155,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
           loadConversationInsights(currentConversationId);
         }
       }, 3000); // Wait 3 seconds for insight processing to complete
-    } catch (error) {
+    } catch (error: unknown) {
       // Remove optimistic message on error
       setMessages(prev => prev.filter(msg => msg !== optimisticUserMessage));
       throw error;
@@ -219,7 +219,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       }
 
       setUserInsights(data.insights || null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading user insights:', error);
     }
   };
@@ -236,7 +236,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       }
 
       setConversationInsights(data.insights || null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading conversation insights:', error);
     }
   };

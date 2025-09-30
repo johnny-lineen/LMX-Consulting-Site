@@ -133,7 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         message: 'Resource uploaded successfully'
       });
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Upload error:', error);
     return res.status(500).json({ error: 'Failed to upload resource' });
   }

@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Insight pipeline test completed'
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error testing insight pipeline:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
