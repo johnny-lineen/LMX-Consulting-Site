@@ -45,19 +45,31 @@ const RESOURCE_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
+interface FormData {
+  title: string;
+  description: string;
+  type: string;
+  tags: string;
+  file: File | null;
+  coverImage: File | null;
+  _isServerImport?: boolean;
+  _sourceFilePath?: string;
+  _sourceCoverPath?: string;
+}
+
 export default function AdminResourcesPage({ user }: AdminResourcesProps) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loadingResources, setLoadingResources] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
     type: 'ebook',
     tags: '',
-    file: null as File | null,
-    coverImage: null as File | null,
+    file: null,
+    coverImage: null,
   });
 
   // Import from folder state
@@ -78,7 +90,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         const data = await response.json();
         setResources(data.resources);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching resources:', error);
     } finally {
       setLoadingResources(false);
@@ -88,7 +100,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    // @ts-ignore - Check for server import mode
+    // Check for server import mode
     const isServerImport = formData._isServerImport;
     
     if (!isServerImport && !formData.file) {
@@ -110,11 +122,10 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         formDataToSend.append('description', formData.description);
         formDataToSend.append('type', formData.type);
         formDataToSend.append('tags', formData.tags);
-        // @ts-ignore
-        formDataToSend.append('sourceFilePath', formData._sourceFilePath);
-        // @ts-ignore
+        if (formData._sourceFilePath) {
+          formDataToSend.append('sourceFilePath', formData._sourceFilePath);
+        }
         if (formData._sourceCoverPath) {
-          // @ts-ignore
           formDataToSend.append('sourceCoverPath', formData._sourceCoverPath);
         }
 
@@ -169,7 +180,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
       } else {
         setMessage({ type: 'error', text: data.error || `Failed to ${isServerImport ? 'import' : 'upload'} resource` });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Submit error:', error);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
@@ -194,7 +205,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         const data = await response.json();
         setMessage({ type: 'error', text: data.error || 'Failed to delete resource' });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Delete error:', error);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     }
@@ -244,7 +255,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         console.error('Import failed:', data);
         setMessage({ type: 'error', text: errorMessage });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Import error:', error);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
@@ -310,7 +321,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
           text: data.error || 'Failed to organize import folder' 
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Organize error:', error);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
@@ -802,7 +813,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         },
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Admin page SSR error:', error);
     
     return {

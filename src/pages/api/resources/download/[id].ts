@@ -83,11 +83,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Send file
     return res.status(200).send(fileBuffer);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[DOWNLOAD] Error:', error);
     return res.status(500).json({ 
       error: 'Failed to download resource',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }

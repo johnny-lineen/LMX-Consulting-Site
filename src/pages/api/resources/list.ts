@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
 import { Resource } from '@/models/Resource';
 import { getCoverImage } from '@/lib/coverImageHelper';
+import { ResourceQuery } from '@/types/api';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -14,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { type, tags, limit } = req.query;
 
     // Build query
-    let query: any = {};
+    const query: ResourceQuery = {};
 
     if (type) {
       query.type = type;
@@ -33,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .lean();
 
     // Transform for public consumption
-    const publicResources = resources.map(resource => ({
+    const publicResources = resources.map((resource: any) => ({
       id: resource._id,
       title: resource.title,
       description: resource.description,
@@ -53,11 +54,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       resources: publicResources,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('List resources error:', error);
     return res.status(500).json({ 
       error: 'Failed to fetch resources',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }

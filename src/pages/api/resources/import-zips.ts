@@ -261,12 +261,13 @@ async function processZipFile(zipPath: string): Promise<{
       imagesFolderPath: fs.existsSync(imagesFolderPath) ? imagesFolderPath : null,
     };
     
-  } catch (error: any) {
-    console.error(`[PROCESS ZIP] ❌ Error:`, error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[PROCESS ZIP] ❌ Error:`, errorMessage);
     console.log(`[PROCESS ZIP] Import failed for ${zipName}, keeping files in /resources-import/`);
     return {
       success: false,
-      error: error.message,
+      error: errorMessage,
       zipName,
     };
   }
@@ -337,8 +338,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           } else {
             console.log(`[ARCHIVE] No images folder to archive for ${result.zipName}`);
           }
-        } catch (archiveError: any) {
-          console.log(`[ARCHIVE] ⚠️ Could not archive files: ${archiveError.message}`);
+        } catch (archiveError: unknown) {
+          console.log(`[ARCHIVE] ⚠️ Could not archive files: ${archiveError instanceof Error ? archiveError.message : String(archiveError)}`);
           // Continue even if archiving fails - resource is already imported
         }
       } else {
@@ -362,7 +363,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       results,
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[IMPORT ZIPS API] Error:', error);
     return res.status(500).json({
       error: 'Failed to process ZIP files',

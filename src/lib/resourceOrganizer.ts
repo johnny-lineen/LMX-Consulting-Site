@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { ResourceMetadata, ProcessResourceResult } from '@/types/resource';
 
 /**
  * Generate a URL-friendly slug from a title
@@ -27,7 +28,7 @@ export function generateTitle(name: string): string {
     .trim();
   
   // Title case
-  cleaned = cleaned.replace(/\b\w/g, (char) => char.toUpperCase());
+  cleaned = cleaned.replace(/\b\w/g, (char: string) => char.toUpperCase());
   
   return cleaned;
 }
@@ -41,9 +42,9 @@ export function extractTags(title: string): string[] {
   return title
     .toLowerCase()
     .split(/\s+/)
-    .filter(word => word.length > 3)
-    .filter(word => !commonWords.includes(word))
-    .filter(word => !word.match(/^\d+$/)) // Remove pure numbers
+    .filter((word: string) => word.length > 3)
+    .filter((word: string) => !commonWords.includes(word))
+    .filter((word: string) => !word.match(/^\d+$/)) // Remove pure numbers
     .slice(0, 5); // Max 5 tags
 }
 
@@ -69,7 +70,7 @@ export function findMainFile(files: string[]): string | null {
   const priorities = ['.pdf', '.docx', '.xlsx', '.zip'];
   
   for (const ext of priorities) {
-    const found = files.find(f => f.toLowerCase().endsWith(ext) && !f.startsWith('.'));
+    const found = files.find((f: string) => f.toLowerCase().endsWith(ext) && !f.startsWith('.'));
     if (found) return found;
   }
   
@@ -81,10 +82,9 @@ export function findMainFile(files: string[]): string | null {
  */
 export function findImageFiles(files: string[]): string[] {
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-  return files.filter(f => {
+  return files.filter((f: string) => {
     const ext = path.extname(f).toLowerCase();
-    return imageExtensions.includes(ext) && !f.startsWith('.');
-  });
+    return imageExtensions.includes(ext) && !f.startsWith('.');  });
 }
 
 /**
@@ -97,7 +97,7 @@ export function createMetadata(params: {
   category: string;
   mainFile: string;
   hasImages: boolean;
-}): object {
+}): ResourceMetadata {
   return {
     title: params.title,
     description: params.description || `Auto-generated description for ${params.title}`,
@@ -115,12 +115,7 @@ export function createMetadata(params: {
 export async function processResourceFolder(
   sourcePath: string,
   basePath: string
-): Promise<{
-  success: boolean;
-  resourcePath?: string;
-  metadata?: any;
-  error?: string;
-}> {
+): Promise<ProcessResourceResult> {
   try {
     const folderName = path.basename(sourcePath);
     console.log(`[ORGANIZE] Processing folder: ${folderName}`);
@@ -200,11 +195,11 @@ export async function processResourceFolder(
       metadata,
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[ORGANIZE] Error processing folder:`, error);
     return {
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

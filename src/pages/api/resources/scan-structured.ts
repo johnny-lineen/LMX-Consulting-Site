@@ -162,11 +162,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       resources,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[SCAN STRUCTURED API] Error:', error);
     return res.status(500).json({
       error: 'Failed to scan structured folders',
-      details: error.message,
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

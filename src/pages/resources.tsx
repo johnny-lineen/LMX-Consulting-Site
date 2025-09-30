@@ -56,7 +56,7 @@ export default function ResourcesPage() {
                 ) as string[];
                 setAvailableTypes(types);
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Error fetching resources:', error);
         } finally {
             setLoading(false);

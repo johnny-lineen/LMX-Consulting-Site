@@ -10,32 +10,32 @@ interface DescriptionTemplate {
 const templates: DescriptionTemplate[] = [
   {
     pattern: /retention|churn|customer/i,
-    generate: (keywords) => 
+    generate: (keywords: string[]) => 
       `Learn proven strategies for ${keywords.join(', ')} with this comprehensive resource. Designed to help businesses reduce churn and increase customer lifetime value.`
   },
   {
     pattern: /guide|roadmap|plan/i,
-    generate: (keywords) => 
+    generate: (keywords: string[]) => 
       `A complete step-by-step guide covering ${keywords.join(', ')}. Follow this roadmap to achieve measurable results and improve your processes.`
   },
   {
     pattern: /checklist|tasks|workflow/i,
-    generate: (keywords) => 
+    generate: (keywords: string[]) => 
       `Streamline your workflow with this actionable checklist. Covering ${keywords.join(', ')}, this resource helps you stay organized and productive.`
   },
   {
     pattern: /template|toolkit/i,
-    generate: (keywords) => 
+    generate: (keywords: string[]) => 
       `Ready-to-use templates and tools for ${keywords.join(', ')}. Save time and implement best practices with these customizable resources.`
   },
   {
     pattern: /ai|automation|copilot/i,
-    generate: (keywords) => 
+    generate: (keywords: string[]) => 
       `Leverage AI and automation for ${keywords.join(', ')}. This resource provides practical strategies to save time and boost productivity.`
   },
   {
     pattern: /tiktok|social|content/i,
-    generate: (keywords) => 
+    generate: (keywords: string[]) => 
       `Master ${keywords.join(', ')} with proven strategies and templates. Create engaging content that drives results and builds your audience.`
   },
 ];
@@ -53,9 +53,9 @@ export function extractKeywords(title: string): string[] {
   return title
     .toLowerCase()
     .split(/[\s-_]+/)
-    .filter(word => word.length > 3)
-    .filter(word => !commonWords.includes(word))
-    .filter(word => !word.match(/^\d+$/))
+    .filter((word: string) => word.length > 3)
+    .filter((word: string) => !commonWords.includes(word))
+    .filter((word: string) => !word.match(/^\d+$/))
     .slice(0, 4); // Max 4 keywords
 }
 
@@ -100,13 +100,13 @@ export function generateTargetAudience(type: string, keywords: string[]): string
  * Generate outcome from keywords
  */
 export function generateOutcome(keywords: string[]): string {
-  if (keywords.some(k => k.includes('retention') || k.includes('churn'))) {
+  if (keywords.some((k: string) => k.includes('retention') || k.includes('churn'))) {
     return 'customer retention and reduce churn';
   }
-  if (keywords.some(k => k.includes('content') || k.includes('social'))) {
+  if (keywords.some((k: string) => k.includes('content') || k.includes('social'))) {
     return 'content creation and audience growth';
   }
-  if (keywords.some(k => k.includes('productivity') || k.includes('automation'))) {
+  if (keywords.some((k: string) => k.includes('productivity') || k.includes('automation'))) {
     return 'productivity and save time';
   }
   

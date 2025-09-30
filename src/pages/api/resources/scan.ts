@@ -195,8 +195,8 @@ function findCoverImageInFolder(folderPath: string): string | null {
         console.log(`[SCAN]   ✓ Found cover image (first image): ${firstImage}`);
         return path.join(searchPath, firstImage);
       }
-    } catch (error: any) {
-      console.log(`[SCAN]   Error reading ${searchPath}:`, error.message);
+    } catch (error: unknown) {
+      console.log(`[SCAN]   Error reading ${searchPath}:`, error instanceof Error ? error.message : String(error));
     }
   }
   
@@ -304,8 +304,8 @@ async function scanCategoryFolder(
       try {
         // Copy to public/resources/covers and get relative path
         coverImagePath = copyCoverImageToPublic(foundCoverPath, slug);
-      } catch (error: any) {
-        console.log(`[SCAN]   ⚠️ Error copying cover image: ${error.message}`);
+      } catch (error: unknown) {
+        console.log(`[SCAN]   ⚠️ Error copying cover image: ${error instanceof Error ? error.message : String(error)}`);
         console.log(`[SCAN]   Using default placeholder`);
         coverImagePath = DEFAULT_COVER_IMAGE;
       }
@@ -349,8 +349,8 @@ async function scanCategoryFolder(
         tags: resource.tags,
       });
       
-    } catch (error: any) {
-      console.error(`[SCAN]   ❌ Failed to insert: ${error.message}`);
+    } catch (error: unknown) {
+      console.error(`[SCAN]   ❌ Failed to insert: ${error instanceof Error ? error.message : String(error)}`);
       skipped.push(folderName);
     }
   }
@@ -432,9 +432,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: `Imported ${allImported.length} new resource(s). Skipped ${allSkipped.length} existing/invalid resource(s).`
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[SCAN API] ❌ Scan error caught:');
-    console.error('[SCAN API] Error message:', error.message);
+    console.error('[SCAN API] Error message:', error instanceof Error ? error.message : String(error));
     console.error('[SCAN API] Error stack:', error.stack);
     console.error('[SCAN API] Error code:', error.code);
     

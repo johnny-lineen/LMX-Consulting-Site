@@ -1,30 +1,18 @@
 import { ConversationInsights } from '@/models/ConversationInsights';
 import { UserInsights } from '@/models/UserInsights';
 import { connectDB } from '@/lib/mongodb';
+import { Insight, UserInsight, InsightType } from '@/types/insight';
 
-export interface IInsight {
-  type: 'goal' | 'preference' | 'constraint' | 'context';
-  content: string;
-  sourceMessage: string;
-  createdAt: Date;
-}
-
-export interface IUserInsight {
-  type: 'goal' | 'preference' | 'constraint' | 'context';
-  content: string;
-  sourceConversationId: string;
-  createdAt: Date;
-  priority?: number;
-  tags?: string[];
-  confidenceScore?: number;
-}
+// Re-export for backward compatibility
+export type IInsight = Insight;
+export type IUserInsight = UserInsight;
 
 /**
  * Extract insights from a conversation message
  * This is a simplified version - in production, you'd use AI/ML services
  */
-export function extractInsightsFromMessage(message: string, role: 'user' | 'assistant'): IInsight[] {
-  const insights: IInsight[] = [];
+export function extractInsightsFromMessage(message: string, role: 'user' | 'assistant'): Insight[] {
+  const insights: Insight[] = [];
   const lowerMessage = message.toLowerCase();
 
   // Simple keyword-based extraction (replace with AI service in production)
@@ -81,8 +69,8 @@ export function extractInsightsFromMessage(message: string, role: 'user' | 'assi
  */
 function extractRelevantContent(message: string, keywords: string[]): string {
   const sentences = message.split(/[.!?]+/);
-  const relevantSentences = sentences.filter(sentence => 
-    keywords.some(keyword => sentence.toLowerCase().includes(keyword))
+  const relevantSentences = sentences.filter((sentence: string) => 
+    keywords.some((keyword: string) => sentence.toLowerCase().includes(keyword))
   );
   
   return relevantSentences.join('. ').trim() || message.substring(0, 100) + '...';
@@ -93,7 +81,7 @@ function extractRelevantContent(message: string, keywords: string[]): string {
  */
 export async function saveConversationInsights(
   conversationId: string, 
-  insights: IInsight[]
+  insights: Insight[]
 ): Promise<void> {
   try {
     await connectDB();
@@ -122,7 +110,7 @@ export async function saveConversationInsights(
 export async function mergeUserInsights(
   userId: string,
   conversationId: string,
-  insights: IInsight[]
+  insights: Insight[]
 ): Promise<void> {
   try {
     await connectDB();
@@ -130,7 +118,7 @@ export async function mergeUserInsights(
     if (insights.length === 0) return;
 
     // Convert conversation insights to user insights
-    const userInsights: IUserInsight[] = insights.map(insight => ({
+    const userInsights: UserInsight[] = insights.map((insight: Insight): UserInsight => ({
       type: insight.type,
       content: insight.content,
       sourceConversationId: conversationId,
@@ -151,9 +139,9 @@ export async function mergeUserInsights(
       await userInsightsDoc.save();
     } else {
       // Merge with existing insights, deduplicating similar content
-      const existingInsights = userInsightsDoc.insights;
-      const newInsights = userInsights.filter(newInsight => 
-        !existingInsights.some(existingInsight => 
+      const existingInsights = userInsightsDoc.insights as UserInsight[];
+      const newInsights = userInsights.filter((newInsight: UserInsight) => 
+        !existingInsights.some((existingInsight: UserInsight) => 
           existingInsight.type === newInsight.type && 
           isSimilarContent(existingInsight.content, newInsight.content)
         )
@@ -179,7 +167,7 @@ function isSimilarContent(content1: string, content2: string): boolean {
   const words1 = content1.toLowerCase().split(/\s+/);
   const words2 = content2.toLowerCase().split(/\s+/);
   
-  const commonWords = words1.filter(word => words2.includes(word));
+  const commonWords = words1.filter((word: string) => words2.includes(word));
   const similarity = commonWords.length / Math.max(words1.length, words2.length);
   
   return similarity > 0.7; // 70% similarity threshold

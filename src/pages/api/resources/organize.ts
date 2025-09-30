@@ -70,16 +70,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       success: true,
-      processed: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
+      processed: results.filter((r: any) => r.success).length,
+      failed: results.filter((r: any) => !r.success).length,
       results,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ORGANIZE API] Error:', error);
     return res.status(500).json({
       error: 'Failed to organize resources',
-      details: error.message,
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
