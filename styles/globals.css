@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Basic resets and CSS variables that reference the Tailwind theme */
+:root {
+  color-scheme: light;
+}
+
+html, body, #__next {
+  height: 100%;
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+/* Utility containers */
+.container-px {
+  @apply px-4 sm:px-6 lg:px-8;
+}

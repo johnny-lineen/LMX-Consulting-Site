@@ -1,0 +1,35 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="pdfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#EF4444;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#DC2626;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#pdfGradient)"/>
+  
+  <!-- Document icon -->
+  <g transform="translate(250, 120)">
+    <!-- Paper -->
+    <rect x="0" y="0" width="300" height="360" rx="10" fill="white" opacity="0.95"/>
+    
+    <!-- Folded corner -->
+    <path d="M 250 0 L 300 50 L 250 50 Z" fill="#E5E7EB"/>
+    
+    <!-- Lines representing text -->
+    <rect x="40" y="80" width="220" height="12" rx="6" fill="#EF4444" opacity="0.3"/>
+    <rect x="40" y="110" width="180" height="12" rx="6" fill="#EF4444" opacity="0.2"/>
+    <rect x="40" y="140" width="200" height="12" rx="6" fill="#EF4444" opacity="0.2"/>
+    <rect x="40" y="170" width="160" height="12" rx="6" fill="#EF4444" opacity="0.2"/>
+    
+    <rect x="40" y="220" width="220" height="12" rx="6" fill="#EF4444" opacity="0.2"/>
+    <rect x="40" y="250" width="190" height="12" rx="6" fill="#EF4444" opacity="0.2"/>
+    <rect x="40" y="280" width="210" height="12" rx="6" fill="#EF4444" opacity="0.2"/>
+  </g>
+  
+  <!-- PDF Label -->
+  <text x="400" y="520" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+  <text x="400" y="560" font-family="Arial, sans-serif" font-size="20" fill="white" opacity="0.9" text-anchor="middle">Document</text>
+</svg>

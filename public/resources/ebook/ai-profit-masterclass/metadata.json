@@ -1,0 +1,16 @@
+{
+  "title": "AI Profit Masterclass",
+  "description": "Leverage AI and automation for profit, masterclass. This resource provides practical strategies to save time and boost productivity.",
+  "tags": [
+    "profit",
+    "masterclass"
+  ],
+  "type": "ebook",
+  "slug": "ai-profit-masterclass",
+  "mainFile": "/resources/ebook/ai-profit-masterclass/main.pdf",
+  "coverImage": "/resources/ebook/ai-profit-masterclass/images/AI Profit Masterclasscover.jpg",
+  "images": [
+    "/resources/ebook/ai-profit-masterclass/images/AI Profit Masterclasscover.jpg"
+  ],
+  "createdAt": "2025-09-30T19:39:13.889Z"
+}

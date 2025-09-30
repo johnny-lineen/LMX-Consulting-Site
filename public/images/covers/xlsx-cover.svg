@@ -1,0 +1,45 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="xlsxGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#xlsxGradient)"/>
+  
+  <!-- Document icon -->
+  <g transform="translate(250, 120)">
+    <!-- Paper -->
+    <rect x="0" y="0" width="300" height="360" rx="10" fill="white" opacity="0.95"/>
+    
+    <!-- Folded corner -->
+    <path d="M 250 0 L 300 50 L 250 50 Z" fill="#E5E7EB"/>
+    
+    <!-- Excel grid -->
+    <g transform="translate(40, 80)">
+      <!-- Grid lines -->
+      <line x1="0" y1="0" x2="220" y2="0" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      <line x1="0" y1="50" x2="220" y2="50" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      <line x1="0" y1="100" x2="220" y2="100" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      <line x1="0" y1="150" x2="220" y2="150" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      <line x1="0" y1="200" x2="220" y2="200" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      
+      <line x1="0" y1="0" x2="0" y2="200" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      <line x1="73" y1="0" x2="73" y2="200" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      <line x1="146" y1="0" x2="146" y2="200" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      <line x1="220" y1="0" x2="220" y2="200" stroke="#10B981" stroke-width="2" opacity="0.3"/>
+      
+      <!-- Some filled cells -->
+      <rect x="2" y="2" width="69" height="46" fill="#10B981" opacity="0.15"/>
+      <rect x="75" y="52" width="69" height="46" fill="#10B981" opacity="0.15"/>
+      <rect x="148" y="102" width="70" height="46" fill="#10B981" opacity="0.15"/>
+    </g>
+  </g>
+  
+  <!-- XLSX Label -->
+  <text x="400" y="520" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">XLSX</text>
+  <text x="400" y="560" font-family="Arial, sans-serif" font-size="20" fill="white" opacity="0.9" text-anchor="middle">Excel Spreadsheet</text>
+</svg>
