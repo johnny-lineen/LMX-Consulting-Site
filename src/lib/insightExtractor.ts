@@ -1,18 +1,36 @@
 import { ConversationInsights } from '@/models/ConversationInsights';
 import { UserInsights } from '@/models/UserInsights';
 import { connectDB } from '@/lib/mongodb';
-import { Insight, UserInsight, InsightType } from '@/types/insight';
 
-// Re-export for backward compatibility
-export type IInsight = Insight;
-export type IUserInsight = UserInsight;
+// Insight type for deduplication logic
+interface Insight {
+  type: string;
+  content: string;
+}
+
+export interface IInsight {
+  type: 'goal' | 'preference' | 'constraint' | 'context';
+  content: string;
+  sourceMessage: string;
+  createdAt: Date;
+}
+
+export interface IUserInsight {
+  type: 'goal' | 'preference' | 'constraint' | 'context';
+  content: string;
+  sourceConversationId: string;
+  createdAt: Date;
+  priority?: number;
+  tags?: string[];
+  confidenceScore?: number;
+}
 
 /**
  * Extract insights from a conversation message
  * This is a simplified version - in production, you'd use AI/ML services
  */
-export function extractInsightsFromMessage(message: string, role: 'user' | 'assistant'): Insight[] {
-  const insights: Insight[] = [];
+export function extractInsightsFromMessage(message: string, role: 'user' | 'assistant'): IInsight[] {
+  const insights: IInsight[] = [];
   const lowerMessage = message.toLowerCase();
 
   // Simple keyword-based extraction (replace with AI service in production)
@@ -81,7 +99,7 @@ function extractRelevantContent(message: string, keywords: string[]): string {
  */
 export async function saveConversationInsights(
   conversationId: string, 
-  insights: Insight[]
+  insights: IInsight[]
 ): Promise<void> {
   try {
     await connectDB();
@@ -110,7 +128,7 @@ export async function saveConversationInsights(
 export async function mergeUserInsights(
   userId: string,
   conversationId: string,
-  insights: Insight[]
+  insights: IInsight[]
 ): Promise<void> {
   try {
     await connectDB();
@@ -118,7 +136,7 @@ export async function mergeUserInsights(
     if (insights.length === 0) return;
 
     // Convert conversation insights to user insights
-    const userInsights: UserInsight[] = insights.map((insight: Insight): UserInsight => ({
+    const userInsights: IUserInsight[] = insights.map((insight: IInsight): IUserInsight => ({
       type: insight.type,
       content: insight.content,
       sourceConversationId: conversationId,
@@ -139,10 +157,10 @@ export async function mergeUserInsights(
       await userInsightsDoc.save();
     } else {
       // Merge with existing insights, deduplicating similar content
-      const existingInsights = userInsightsDoc.insights as UserInsight[];
-      const newInsights = userInsights.filter((newInsight: UserInsight) => 
-        !existingInsights.some((existingInsight: UserInsight) => 
-          existingInsight.type === newInsight.type && 
+      const existingInsights: Insight[] = userInsightsDoc.insights;
+      const newInsights = userInsights.filter((newInsight: Insight) =>
+        !existingInsights.some((existingInsight: Insight) =>
+          existingInsight.type === newInsight.type &&
           isSimilarContent(existingInsight.content, newInsight.content)
         )
       );
@@ -154,7 +172,7 @@ export async function mergeUserInsights(
     }
 
     console.log(`✅ Merged ${userInsights.length} insights for user ${userId}`);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ Error merging user insights:', error);
     throw error;
   }
