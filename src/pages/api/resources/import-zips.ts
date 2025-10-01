@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
-import { Resource } from '@/models/Resource';
+import { Resource, IResource } from '@/models/Resource';
 import { requireAdmin } from '@/utils/adminAuth';
 import { generateSlug, generateTitle, extractTags } from '@/lib/resourceOrganizer';
 import { extractZip, findZipFiles, moveFile, archiveZip, archiveDirectory, deleteDirectory } from '@/lib/zipProcessor';
@@ -23,7 +23,7 @@ function findMainFile(files: string[]): { file: string; relativePath: string } |
   const priorities = ['.pdf', '.docx', '.xlsx', '.zip'];
   
   for (const ext of priorities) {
-    const found = files.find(f => {
+    const found = files.find((f: string) => {
       const filename = path.basename(f);
       return filename.toLowerCase().endsWith(ext) && !filename.startsWith('.');
     });
@@ -42,7 +42,7 @@ function findCoverImage(files: string[]): { file: string; relativePath: string }
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
   
   // Priority 1: Files with "cover" in name
-  const coverFile = files.find(f => {
+  const coverFile = files.find((f: string) => {
     const filename = path.basename(f).toLowerCase();
     const ext = path.extname(filename);
     return imageExtensions.includes(ext) && 
@@ -55,7 +55,7 @@ function findCoverImage(files: string[]): { file: string; relativePath: string }
   }
   
   // Priority 2: First image file
-  const firstImage = files.find(f => {
+  const firstImage = files.find((f: string) => {
     const filename = path.basename(f);
     const ext = path.extname(filename).toLowerCase();
     return imageExtensions.includes(ext) && !filename.startsWith('.');
@@ -93,6 +93,8 @@ async function processZipFile(zipPath: string): Promise<{
   success: boolean;
   resourceId?: string;
   title?: string;
+  zipName?: string;
+  imagesFolderPath?: string | null;
   error?: string;
 }> {
   const zipName = path.basename(zipPath, '.zip');
@@ -109,10 +111,10 @@ async function processZipFile(zipPath: string): Promise<{
     console.log(`[PROCESS ZIP] Slug: ${slug}`);
     
     // Check if already imported
-    const existing = await Resource.findOne({ slug }).lean();
+    const existing = await Resource.findOne({ slug }).lean<IResource | null>();
     if (existing) {
       console.log(`[PROCESS ZIP] ⚠️ Skipped: Resource with slug "${slug}" already exists`);
-      return { success: false, error: 'Already imported' };
+      return { success: false, zipName, error: 'Already imported' };
     }
     
     // Extract ZIP to temp folder
@@ -128,7 +130,7 @@ async function processZipFile(zipPath: string): Promise<{
     if (!mainFileResult) {
       console.log(`[PROCESS ZIP] ⚠️ No main file found`);
       deleteDirectory(tempExtractDir);
-      return { success: false, error: 'No main file found' };
+      return { success: false, zipName, error: 'No main file found' };
     }
     
     console.log(`[PROCESS ZIP] Main file: ${mainFileResult.relativePath}`);
@@ -367,7 +369,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('[IMPORT ZIPS API] Error:', error);
     return res.status(500).json({
       error: 'Failed to process ZIP files',
-      details: error.message,
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

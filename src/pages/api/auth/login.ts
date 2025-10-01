@@ -19,10 +19,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await connectDB();
 
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // Find user by email (include password for auth checks)
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // If user has no password yet, require setup
+    if (!user.password) {
+      return res.status(403).json({ requirePasswordSetup: true });
     }
 
     // Check password

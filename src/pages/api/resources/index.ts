@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
-import { Resource } from '@/models/Resource';
+import { Resource, IResource } from '@/models/Resource';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   await connectDB();
@@ -9,10 +9,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { category, tags } = req.query;
       
-      let query: any = {};
+      const query: any = {};
       
       if (category) {
-        query.category = category;
+        query.category = Array.isArray(category) ? category[0] : category;
       }
       
       if (tags) {
@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const resources = await Resource.find(query)
         .sort({ createdAt: -1 })
-        .lean();
+        .lean<IResource[]>();
 
       return res.status(200).json({ resources });
     } catch (error: unknown) {

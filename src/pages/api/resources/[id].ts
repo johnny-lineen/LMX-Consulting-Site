@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
-import { Resource } from '@/models/Resource';
+import { Resource, IResource } from '@/models/Resource';
 import { requireAdmin } from '@/utils/adminAuth';
 import fs from 'fs';
 import path from 'path';
@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
-      const resource = await Resource.findById(id).lean();
+      const resource = await Resource.findById(id).lean<IResource | null>();
 
       if (!resource) {
         return res.status(404).json({ error: 'Resource not found' });
@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!isAdmin) return;
 
     try {
-      const resource = await Resource.findById(id);
+      const resource = await Resource.findById(id).lean<IResource | null>();
 
       if (!resource) {
         return res.status(404).json({ error: 'Resource not found' });

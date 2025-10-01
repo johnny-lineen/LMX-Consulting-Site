@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
-import { Resource } from '@/models/Resource';
+import { Resource, IResource } from '@/models/Resource';
 import fs from 'fs';
 import path from 'path';
 
@@ -18,8 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await connectDB();
 
-    // Find resource
-    const resource = await Resource.findById(id).lean();
+    // Find resource with explicit type
+    const resource = await Resource.findById(id).lean<IResource | null>();
 
     if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
@@ -33,15 +33,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       filePath = path.join(process.cwd(), 'public', resource.mainFile);
       console.log('[DOWNLOAD] Using mainFile (relative):', resource.mainFile);
       console.log('[DOWNLOAD] Resolved to:', filePath);
-    } else if (resource.filePath.startsWith('/')) {
+    } else if (resource.filePath && resource.filePath.startsWith('/')) {
       // Relative path in filePath
       filePath = path.join(process.cwd(), 'public', resource.filePath);
       console.log('[DOWNLOAD] Using filePath (relative):', resource.filePath);
       console.log('[DOWNLOAD] Resolved to:', filePath);
-    } else {
+    } else if (resource.filePath) {
       // Absolute path (old system)
       filePath = resource.filePath;
       console.log('[DOWNLOAD] Using absolute path:', filePath);
+    } else {
+      // No valid file path found
+      console.error('[DOWNLOAD] No valid file path found for resource:', resource._id);
+      return res.status(400).json({ 
+        error: 'Resource file not found or invalid',
+        details: 'Neither mainFile nor filePath is properly configured'
+      });
     }
 
     // Check if file exists

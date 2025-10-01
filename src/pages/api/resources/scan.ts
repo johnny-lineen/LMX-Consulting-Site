@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
-import { Resource } from '@/models/Resource';
+import { Resource, IResource } from '@/models/Resource';
 import { requireAdmin } from '@/utils/adminAuth';
 import { generateDescription } from '@/lib/descriptionGenerator';
 import fs from 'fs';
@@ -103,7 +103,7 @@ function findMainFile(folderPath: string): string | null {
   const priorities = ['.pdf', '.docx', '.xlsx', '.zip'];
   
   for (const ext of priorities) {
-    const found = files.find(f => {
+    const found = files.find((f: string) => {
       const fPath = path.join(folderPath, f);
       try {
         return fs.statSync(fPath).isFile() && f.toLowerCase().endsWith(ext) && !f.startsWith('.');
@@ -277,7 +277,7 @@ async function scanCategoryFolder(
         { slug: slug },
         { title: title }
       ]
-    }).lean();
+    }).lean<IResource | null>();
     
     if (existingResource) {
       console.log(`[SCAN]   ⚠️ Skipped: Already exists in database (slug: ${existingResource.slug})`);

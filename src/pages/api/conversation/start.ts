@@ -1,13 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { connectDB } from '@/lib/mongodb';
-import { Conversation } from '@/models/Conversation';
+// DISABLED: Chatbot backend removed
+// import { connectDB } from '@/lib/mongodb';
+// import { Conversation } from '@/models/Conversation';
 import { getCurrentUser } from '@/utils/auth';
 import { randomUUID } from 'crypto';
 
 /**
  * POST /api/conversation/start
  * 
- * Creates a new conversation for the authenticated user
+ * DISABLED: Chatbot backend removed
+ * Returns stub response to keep UI functional
  * 
  * Returns:
  * - 201: Conversation created successfully
@@ -16,12 +18,40 @@ import { randomUUID } from 'crypto';
  * - 500: Server error with detailed message
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Step 1: Validate HTTP method
   if (req.method !== 'POST') {
-    console.warn(`[conversation/start] Invalid method: ${req.method}`);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // DISABLED: Chatbot backend disabled - return stub response
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  const conversationId = randomUUID();
+  const sessionId = randomUUID();
+
+  return res.status(201).json({
+    success: true,
+    conversationId,
+    sessionId,
+    conversation: {
+      conversationId,
+      sessionId,
+      userId: currentUser.userId,
+      messages: [
+        {
+          role: 'assistant',
+          message: 'The chatbot feature is temporarily unavailable. Please check back later.',
+          timestamp: new Date()
+        }
+      ],
+      createdAt: new Date()
+    },
+    message: 'Chatbot backend is currently disabled'
+  });
+
+  /* DISABLED: Original conversation creation logic
   try {
     console.log('[conversation/start] Starting conversation creation...');
 
@@ -180,12 +210,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error: unknown) {
     // Catch-all error handler
     console.error('[conversation/start] Unexpected error:', error);
-    console.error('[conversation/start] Error stack:', error.stack);
     
     return res.status(500).json({ 
       error: 'Internal server error',
-      details: error.message || 'An unexpected error occurred',
-      type: error.name || 'UnknownError'
+      details: error instanceof Error ? error.message : 'An unexpected error occurred',
+      type: error instanceof Error ? error.constructor.name : 'UnknownError'
     });
   }
+  */
 }

@@ -3,7 +3,7 @@ import { GetServerSideProps } from 'next';
 import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/utils/auth';
 import { connectDB } from '@/lib/mongodb';
-import { User } from '@/models/User';
+import { User, IUser } from '@/models/User';
 import { Upload, FileText, Image, X, Check, AlertCircle, FolderOpen, Download } from 'lucide-react';
 
 interface AdminResourcesProps {
@@ -21,7 +21,9 @@ interface Resource {
   description: string;
   type: string;
   filePath: string;
+  mainFile?: string;
   coverImage?: string;
+  images?: string[];
   tags: string[];
   createdAt: string;
   updatedAt: string;
@@ -63,6 +65,16 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
   const [loadingResources, setLoadingResources] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
+  // Pending testimonials state
+  const [pending, setPending] = useState<Array<{ _id: string; clientName: string; email: string; testimonial: string; rating?: number; source?: string; createdAt: string }>>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [pendingTotal, setPendingTotal] = useState(0);
+  const [pendingSkip, setPendingSkip] = useState(0);
+  const [pendingHasMore, setPendingHasMore] = useState(false);
+  const [search, setSearch] = useState('');
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -81,6 +93,8 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
 
   useEffect(() => {
     fetchResources();
+    // initial pending fetch
+    loadPending(true);
   }, []);
 
   const fetchResources = async () => {
@@ -94,6 +108,101 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
       console.error('Error fetching resources:', error);
     } finally {
       setLoadingResources(false);
+    }
+  };
+
+  // --- Pending testimonials ---
+  const loadPending = async (reset: boolean = false) => {
+    try {
+      setPendingLoading(true);
+      const limit = 15;
+      const skip = reset ? 0 : pendingSkip;
+      const resp = await fetch(`/api/testimonials/list?status=pending&limit=${limit}&skip=${skip}`);
+      const data = await resp.json();
+      if (resp.ok) {
+        const items = (data.items || []).map((d: any) => ({
+          _id: String(d._id),
+          clientName: String(d.clientName || ''),
+          email: String(d.email || ''),
+          testimonial: String(d.testimonial || ''),
+          rating: typeof d.rating === 'number' ? d.rating : undefined,
+          source: d.source ? String(d.source) : undefined,
+          createdAt: d.createdAt
+        }));
+        setPending(reset ? items : [...pending, ...items]);
+        setPendingTotal(typeof data.total === 'number' ? data.total : items.length);
+        const next = typeof data.nextSkip === 'number' ? data.nextSkip : skip + items.length;
+        setPendingSkip(next);
+        setPendingHasMore(Boolean(data.nextSkip));
+      }
+    } catch (e) {
+      // ignore
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  // simple debounce for search input
+  useEffect(() => {
+    const t = setTimeout(() => {
+      // no server filtering; client-side only
+      // noop, state change triggers re-render
+    }, 250);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filteredPending = pending.filter((p) => {
+    const q = search.toLowerCase();
+    if (!q) return true;
+    return (
+      p.clientName.toLowerCase().includes(q) ||
+      p.email.toLowerCase().includes(q) ||
+      p.testimonial.toLowerCase().includes(q)
+    );
+  });
+
+  const approvePending = async (id: string) => {
+    try {
+      setActionBusyId(id);
+      // optimistic remove
+      const prev = pending;
+      setPending(prev.filter((p) => p._id !== id));
+      const resp = await fetch('/api/testimonials/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testimonialId: id, status: 'approved' })
+      });
+      if (!resp.ok) {
+        // restore on failure
+        setPending(prev);
+        alert('Failed to approve testimonial');
+      }
+    } catch (e) {
+      alert('Failed to approve testimonial');
+    } finally {
+      setActionBusyId(null);
+    }
+  };
+
+  const deletePending = async (id: string) => {
+    if (!confirm("Delete this testimonial? This can't be undone.")) return;
+    try {
+      setActionBusyId(id);
+      const prev = pending;
+      setPending(prev.filter((p) => p._id !== id));
+      const resp = await fetch('/api/testimonials/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testimonialId: id })
+      });
+      if (!resp.ok) {
+        setPending(prev);
+        alert('Failed to delete testimonial');
+      }
+    } catch (e) {
+      alert('Failed to delete testimonial');
+    } finally {
+      setActionBusyId(null);
     }
   };
 
@@ -365,54 +474,143 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
           </div>
         )}
 
-        {/* Import Management Buttons */}
+        {/* Admin Tools Section */}
         <div className="mb-6">
-          <button
-            onClick={handleImportZips}
-            disabled={scanning}
-            className={`px-8 py-4 rounded-lg font-semibold transition flex items-center gap-3 text-lg ${
-              scanning
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg'
-            }`}
-            title="Import ZIP files from desktop folder - extracts and copies to /public/resources"
-          >
-            {scanning ? (
-              <>
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Processing ZIPs...
-              </>
-            ) : (
-              <>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Import ZIP Files from Desktop
-              </>
-            )}
-          </button>
+          <h2 className="text-xl font-semibold mb-4">Admin Tools</h2>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Import ZIP Files */}
+            <button
+              onClick={handleImportZips}
+              disabled={scanning}
+              className={`px-6 py-4 rounded-lg font-semibold transition flex items-center gap-3 ${
+                scanning
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg'
+              }`}
+              title="Import ZIP files from desktop folder - extracts and copies to /public/resources"
+            >
+              {scanning ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Processing ZIPs...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Import ZIP Files
+                </>
+              )}
+            </button>
+
+            {/* Submit Testimonial */}
+            <a
+              href="/testimonials/submit"
+              className="px-6 py-4 rounded-lg font-semibold transition flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg"
+              title="Manually test the testimonial form or share this page with clients"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Submit Testimonial
+            </a>
+          </div>
+          
+          <div className="mt-4 text-sm text-gray-600">
+            <p><strong>Submit Testimonial:</strong> Collects name, email, and testimonial from clients. Auto-links to existing user or creates a new one.</p>
+          </div>
         </div>
 
-        {/* Info Box */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-5 mb-6 text-sm">
-          <p className="font-bold text-blue-900 mb-3 text-base">📦 How to Import Resources:</p>
-          <div className="space-y-3 text-blue-800">
-            <div className="bg-white bg-opacity-60 rounded-lg p-3">
-              <p className="font-semibold mb-1">1️⃣ Download Your Resources</p>
-              <p className="text-xs">Save ZIP files to: <code className="bg-blue-100 px-1 py-0.5 rounded">Desktop/resources</code></p>
-            </div>
-            <div className="bg-white bg-opacity-60 rounded-lg p-3">
-              <p className="font-semibold mb-1">2️⃣ Click "Import ZIP Files from Desktop"</p>
-              <p className="text-xs">System will extract, organize, and copy to <code className="bg-blue-100 px-1 py-0.5 rounded">/public/resources</code></p>
-            </div>
-            <div className="bg-white bg-opacity-60 rounded-lg p-3">
-              <p className="font-semibold mb-1">3️⃣ Resources Auto-Imported</p>
-              <p className="text-xs">Files copied with relative paths, covers detected, metadata generated ✨</p>
-            </div>
-            <div className="text-xs text-blue-700 mt-2 bg-white bg-opacity-40 rounded p-2">
-              <strong>Alternative:</strong> Use manual upload form below for individual files
+        {/* Compact Help Card */}
+        <div className="bg-white border rounded-2xl p-5 mb-6 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-base font-semibold">How to Import Resources</h3>
+              <p className="text-sm text-gray-600 mt-1">Import ZIPs from your desktop or upload individually. <button onClick={() => setIsHelpOpen(!isHelpOpen)} className="text-blue-600 hover:underline">{isHelpOpen ? 'Hide details' : 'Show details'}</button></p>
             </div>
           </div>
+          {isHelpOpen && (
+            <div className="mt-4 text-sm text-gray-700 space-y-2">
+              <div>1) Download resources to <code className="bg-gray-100 px-1 py-0.5 rounded">Desktop/resources</code></div>
+              <div>2) Click <span className="font-medium">Import ZIP Files</span> to extract and organize</div>
+              <div>3) Files are copied to <code className="bg-gray-100 px-1 py-0.5 rounded">/public/resources</code> with covers/metadata</div>
+            </div>
+          )}
+        </div>
+
+        {/* Pending Testimonials */}
+        <div className="bg-white rounded-2xl border p-5 mb-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Pending Testimonials</h2>
+              <p className="text-sm text-gray-600">Approve or delete recent submissions.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, email, or text..."
+                className="px-3 py-2 border rounded-lg text-sm w-64"
+              />
+              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">Pending: {filteredPending.length}{pendingLoading ? '…' : ''}</span>
+            </div>
+          </div>
+
+          {pendingLoading && pending.length === 0 ? (
+            <div className="text-center py-10 text-sm text-gray-500">Loading pending testimonials…</div>
+          ) : filteredPending.length === 0 ? (
+            <div className="border rounded-xl p-6 mt-4 text-center text-sm text-gray-600">No pending testimonials. New submissions will appear here.</div>
+          ) : (
+            <div className="mt-4 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {filteredPending.map((t) => {
+                const quote = (t.testimonial || '').toString().trim();
+                const isQuoted = quote.startsWith('“') || quote.startsWith('"');
+                const display = isQuoted ? quote : `“${quote}”`;
+                return (
+                  <div key={t._id} className="rounded-2xl border p-5 shadow-sm bg-white">
+                    <p className="text-sm text-gray-800 line-clamp-4">{display}</p>
+                    <div className="mt-3 text-xs text-gray-600">
+                      <div className="font-medium text-gray-800">{t.clientName} <span className="text-gray-500">&lt;{t.email}&gt;</span></div>
+                      {typeof t.rating === 'number' && (
+                        <div className="mt-1" aria-label={`Rating ${t.rating} of 5`}>
+                          {'★★★★★'.slice(0, t.rating)}{'☆☆☆☆☆'.slice(0, Math.max(0, 5 - t.rating))}
+                        </div>
+                      )}
+                      {t.source && <div className="mt-1">{t.source}</div>}
+                      <div className="mt-1 text-gray-500">Submitted {new Date(t.createdAt).toLocaleString()}</div>
+                    </div>
+                    <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:justify-end">
+                      <button
+                        onClick={() => approvePending(t._id)}
+                        disabled={actionBusyId === t._id}
+                        className={`px-4 py-2 rounded-lg text-white ${actionBusyId === t._id ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
+                      >
+                        {actionBusyId === t._id ? 'Approving…' : 'Approve'}
+                      </button>
+                      <button
+                        onClick={() => deletePending(t._id)}
+                        disabled={actionBusyId === t._id}
+                        className={`px-4 py-2 rounded-lg border ${actionBusyId === t._id ? 'border-red-200 text-red-300' : 'border-red-300 text-red-700 hover:bg-red-50'}`}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {pendingHasMore && (
+            <div className="mt-4 text-center">
+              <button onClick={() => loadPending(false)} disabled={pendingLoading} className={`px-4 py-2 rounded-lg border ${pendingLoading ? 'bg-gray-100 text-gray-400' : 'hover:bg-gray-50'}`}>
+                {pendingLoading ? 'Loading…' : 'Load more'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Scan Results Modal */}
@@ -792,7 +990,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
 
     await connectDB();
-    const user = await User.findById(currentUser.userId).lean();
+    const user = await User.findById(currentUser.userId).lean<IUser | null>();
 
     if (!user || !user.isAdmin) {
       return {

@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
-import { Resource } from '@/models/Resource';
+import { Resource, IResource } from '@/models/Resource';
 import { getCoverImage } from '@/lib/coverImageHelper';
 import { ResourceQuery } from '@/types/api';
 
@@ -18,10 +18,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const query: ResourceQuery = {};
 
     if (type) {
-      query.type = type;
+      // Normalize type to string (query params can be string or string[])
+      query.type = Array.isArray(type) ? type[0] : type;
     }
 
     if (tags) {
+      // Normalize tags to string array
       const tagArray = Array.isArray(tags) ? tags : [tags];
       query.tags = { $in: tagArray };
     }
@@ -31,10 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .select('-folderPath -__v') // Exclude admin-only fields
       .sort({ createdAt: -1 })
       .limit(limit ? parseInt(limit as string) : 100)
-      .lean();
+      .lean<IResource[]>();
 
     // Transform for public consumption
-    const publicResources = resources.map((resource: any) => ({
+    const publicResources = resources.map((resource: IResource) => ({
       id: resource._id,
       title: resource.title,
       description: resource.description,

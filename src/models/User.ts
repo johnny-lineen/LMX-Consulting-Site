@@ -3,8 +3,9 @@ import mongoose, { Schema, model, models } from 'mongoose';
 export interface IUser {
   _id: string;
   email: string;
-  password: string;
+  password: string | null;
   name: string;
+  role?: 'admin' | 'client' | 'user';
   isAdmin: boolean;
   createdAt: Date;
 }
@@ -18,15 +19,21 @@ const UserSchema = new Schema<IUser>({
     trim: true
   },
   password: { 
-    type: String, 
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters']
+    type: String,
+    default: null,
+    required: false,
+    select: false
   },
   name: { 
     type: String, 
     required: [true, 'Name is required'],
     trim: true,
     maxlength: [50, 'Name must be less than 50 characters']
+  },
+  role: {
+    type: String,
+    enum: ['admin', 'client', 'user'],
+    default: 'client'
   },
   isAdmin: {
     type: Boolean,
@@ -49,5 +56,10 @@ UserSchema.methods.toJSON = function() {
   delete user.password;
   return user;
 };
+
+// Optional virtual to indicate if a user needs password setup
+UserSchema.virtual('requiresPasswordSetup').get(function(this: any) {
+  return !this.password;
+});
 
 export const User = models.User || model<IUser>('User', UserSchema);

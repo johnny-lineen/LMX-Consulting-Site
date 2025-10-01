@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
-import { Resource } from '@/models/Resource';
+import { Resource, IResource } from '@/models/Resource';
 import { requireAdmin } from '@/utils/adminAuth';
 import fs from 'fs';
 import path from 'path';
@@ -64,7 +64,7 @@ async function scanStructuredFolders(): Promise<StructuredResource[]> {
       const slug = folder.name;
       const existingResource = await Resource.findOne({ 
         filePath: new RegExp(slug, 'i') 
-      }).lean();
+      }).lean<IResource | null>();
 
       if (existingResource) {
         console.log(`[SCAN STRUCTURED] Skipping already imported: ${slug}`);
