@@ -22,7 +22,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ success: true });
   } catch (error: unknown) {
-    console.error('[testimonials/delete] Error:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

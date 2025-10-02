@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Test 4: Simulate insight extraction
     const testMessage = "I want to build a task management bot but I have no coding experience";
-    const testHistory = [
+    const testHistory: Array<{ role: 'user' | 'assistant'; message: string }> = [
       { role: 'user', message: 'Hi, I need help with automation' },
       { role: 'assistant', message: 'I\'d be happy to help! What specific tasks are you looking to automate?' }
     ];
@@ -77,7 +77,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: unknown) {
-    console.error('Error testing complete pipeline:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

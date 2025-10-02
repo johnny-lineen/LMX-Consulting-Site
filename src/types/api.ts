@@ -4,6 +4,8 @@
 
 export interface ResourceQuery {
   type?: string;
+  category?: string;
+  status?: string;
   tags?: { $in: string[] };
 }
 

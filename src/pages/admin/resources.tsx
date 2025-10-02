@@ -3,8 +3,9 @@ import { GetServerSideProps } from 'next';
 import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/utils/auth';
 import { connectDB } from '@/lib/mongodb';
+import { RESOURCE_TYPE_LABELS } from '@/lib/resourceTypeMapper';
 import { User, IUser } from '@/models/User';
-import { Upload, FileText, Image, X, Check, AlertCircle, FolderOpen, Download } from 'lucide-react';
+import { Upload, FileText, Image, X, Check, AlertCircle, FolderOpen, Download, Search, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 
 interface AdminResourcesProps {
   user: {
@@ -20,11 +21,16 @@ interface Resource {
   title: string;
   description: string;
   type: string;
+  slug: string;
+  category: string;
+  fileUrl?: string;
   filePath: string;
   mainFile?: string;
   coverImage?: string;
   images?: string[];
   tags: string[];
+  gated: boolean;
+  status: 'draft' | 'live' | 'archived';
   createdAt: string;
   updatedAt: string;
 }
@@ -38,22 +44,44 @@ interface ScannedFile {
   fileSize: number;
 }
 
+// Use the mapping utility for consistent type handling
 const RESOURCE_TYPES = [
-  { value: 'ebook', label: 'E-Book' },
-  { value: 'checklist', label: 'Checklist' },
-  { value: 'notion-template', label: 'Notion Template' },
-  { value: 'guide', label: 'Guide' },
-  { value: 'toolkit', label: 'Toolkit' },
-  { value: 'other', label: 'Other' },
+  { value: 'notion', label: RESOURCE_TYPE_LABELS.notion },
+  { value: 'ebook', label: RESOURCE_TYPE_LABELS.ebook },
+  { value: 'cheatsheet', label: RESOURCE_TYPE_LABELS.cheatsheet },
+  { value: 'video', label: RESOURCE_TYPE_LABELS.video },
+];
+
+const RESOURCE_CATEGORIES = [
+  'AI & Automation',
+  'Productivity',
+  'Education',
+  'Business',
+  'Marketing',
+  'Design',
+  'Development',
+  'Writing',
+  'Finance',
+  'Health & Wellness',
+  'Other'
+];
+
+const STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft (Hidden from public)' },
+  { value: 'live', label: 'Live (Visible to public)' },
 ];
 
 interface FormData {
   title: string;
   description: string;
   type: string;
+  category: string;
+  fileUrl: string;
   tags: string;
   file: File | null;
   coverImage: File | null;
+  gated: boolean;
+  status: string;
   _isServerImport?: boolean;
   _sourceFilePath?: string;
   _sourceCoverPath?: string;
@@ -75,14 +103,29 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [actionBusyId, setActionBusyId] = useState<string | null>(null);
   
+  // New state for improved resource management
+  const [resourceSearch, setResourceSearch] = useState('');
+  const [resourceTypeFilter, setResourceTypeFilter] = useState<string>('all');
+  const [resourceStatusFilter, setResourceStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
     type: 'ebook',
+    category: '',
+    fileUrl: '',
     tags: '',
     file: null,
     coverImage: null,
+    gated: false,
+    status: 'draft',
   });
+
+  // Client-side validation errors
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Import from folder state
   const [scanning, setScanning] = useState(false);
@@ -105,7 +148,8 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         setResources(data.resources);
       }
     } catch (error: unknown) {
-      console.error('Error fetching resources:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
     } finally {
       setLoadingResources(false);
     }
@@ -206,16 +250,58 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
     }
   };
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    // Required field validation
+    if (!formData.title.trim()) {
+      errors.title = 'Title is required';
+    }
+    if (!formData.description.trim()) {
+      errors.description = 'Description is required';
+    }
+    if (!formData.category) {
+      errors.category = 'Category is required';
+    }
+    
+    // Type-specific validation with clean error messages
+    if (formData.type === 'notion') {
+      if (!formData.fileUrl.trim()) {
+        errors.fileUrl = 'Notion templates must include a valid Notion link.';
+      } else if (!formData.fileUrl.includes('notion.so') && !formData.fileUrl.includes('notion.site')) {
+        errors.fileUrl = 'Notion templates must include a valid Notion link.';
+      }
+    } else if (formData.type === 'ebook') {
+      if (!formData.fileUrl.trim()) {
+        errors.fileUrl = 'Ebooks must include a valid PDF link.';
+      } else if (!formData.fileUrl.endsWith('.pdf') && !formData.fileUrl.includes('.pdf')) {
+        errors.fileUrl = 'Ebooks must include a valid PDF link.';
+      }
+    } else if (['cheatsheet', 'video'].includes(formData.type)) {
+      // For cheatsheet and video, require either fileUrl or file upload
+      if (!formData.fileUrl.trim() && !formData.file) {
+        errors.fileUrl = 'Either file URL or file upload is required';
+      }
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    // Check for server import mode
-    const isServerImport = formData._isServerImport;
+    // Clear previous validation errors
+    setValidationErrors({});
     
-    if (!isServerImport && !formData.file) {
-      setMessage({ type: 'error', text: 'Please select a file to upload or import from folder' });
+    // Client-side validation
+    if (!validateForm()) {
+      setMessage({ type: 'error', text: 'Please fix the validation errors below' });
       return;
     }
+    
+    // Check for server import mode
+    const isServerImport = formData._isServerImport;
 
     setUploading(true);
     setMessage(null);
@@ -230,7 +316,10 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         formDataToSend.append('title', formData.title);
         formDataToSend.append('description', formData.description);
         formDataToSend.append('type', formData.type);
+        formDataToSend.append('category', formData.category);
         formDataToSend.append('tags', formData.tags);
+        formDataToSend.append('gated', formData.gated.toString());
+        formDataToSend.append('status', formData.status);
         if (formData._sourceFilePath) {
           formDataToSend.append('sourceFilePath', formData._sourceFilePath);
         }
@@ -245,19 +334,25 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         
         data = await response.json();
       } else {
-        // Regular file upload
+        // Regular file upload or URL-based resource
         const formDataToSend = new FormData();
         formDataToSend.append('title', formData.title);
         formDataToSend.append('description', formData.description);
         formDataToSend.append('type', formData.type);
+        formDataToSend.append('category', formData.category);
+        formDataToSend.append('fileUrl', formData.fileUrl);
         formDataToSend.append('tags', formData.tags);
-        formDataToSend.append('file', formData.file!);
+        formDataToSend.append('gated', formData.gated.toString());
+        formDataToSend.append('status', formData.status);
         
+        if (formData.file) {
+          formDataToSend.append('file', formData.file);
+        }
         if (formData.coverImage) {
           formDataToSend.append('coverImage', formData.coverImage);
         }
 
-        response = await fetch('/api/resources/upload', {
+        response = await fetch('/api/resources/create', {
           method: 'POST',
           body: formDataToSend,
         });
@@ -273,10 +368,17 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
           title: '',
           description: '',
           type: 'ebook',
+          category: '',
+          fileUrl: '',
           tags: '',
           file: null,
           coverImage: null,
+          gated: false,
+          status: 'draft',
         });
+        
+        // Clear validation errors
+        setValidationErrors({});
         
         // Reset file inputs
         const fileInput = document.querySelector<HTMLInputElement>('#file-input');
@@ -290,7 +392,8 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         setMessage({ type: 'error', text: data.error || `Failed to ${isServerImport ? 'import' : 'upload'} resource` });
       }
     } catch (error: unknown) {
-      console.error('Submit error:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
       setUploading(false);
@@ -298,10 +401,6 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this resource?')) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/resources/${id}`, {
         method: 'DELETE',
@@ -310,15 +409,62 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
       if (response.ok) {
         setMessage({ type: 'success', text: 'Resource deleted successfully!' });
         fetchResources();
+        setDeleteConfirmId(null); // Close confirmation modal
       } else {
         const data = await response.json();
         setMessage({ type: 'error', text: data.error || 'Failed to delete resource' });
       }
     } catch (error: unknown) {
-      console.error('Delete error:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     }
   };
+
+  const handleStatusChange = async (id: string, newStatus: 'draft' | 'live' | 'archived') => {
+    try {
+      const response = await fetch(`/api/resources/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        setResources(prev => 
+          prev.map(r => r._id === id ? { ...r, status: newStatus } : r)
+        );
+        setMessage({ type: 'success', text: `Resource status updated to ${newStatus}` });
+      } else {
+        const data = await response.json();
+        setMessage({ type: 'error', text: data.error || 'Failed to update status' });
+      }
+    } catch (error: unknown) {
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
+      setMessage({ type: 'error', text: 'Failed to update status' });
+    }
+  };
+
+  // Filter and paginate resources
+  const filteredResources = resources.filter(resource => {
+    const matchesSearch = resource.title.toLowerCase().includes(resourceSearch.toLowerCase()) ||
+                         resource.description.toLowerCase().includes(resourceSearch.toLowerCase());
+    const matchesType = resourceTypeFilter === 'all' || resource.type === resourceTypeFilter;
+    const matchesStatus = resourceStatusFilter === 'all' || resource.status === resourceStatusFilter;
+    
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedResources = filteredResources.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [resourceSearch, resourceTypeFilter, resourceStatusFilter]);
 
   const handleImportZips = async () => {
     setScanning(true);
@@ -365,7 +511,8 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         setMessage({ type: 'error', text: errorMessage });
       }
     } catch (error: unknown) {
-      console.error('Import error:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
       setScanning(false);
@@ -378,9 +525,13 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
       title: scannedFile.suggestedTitle,
       description: '', // Leave empty for admin to fill
       type: scannedFile.type,
+      category: '', // Leave empty for admin to fill
+      fileUrl: '', // Will be set via sourceFilePath in backend
       tags: '', // Leave empty for admin to fill
       file: null, // Will be set via sourceFilePath in backend
       coverImage: null, // Will be set via sourceCoverPath in backend
+      gated: false, // Default to false for scanned files
+      status: 'draft', // Default to draft for scanned files
     });
 
     // Store source paths for server-side import
@@ -431,7 +582,8 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         });
       }
     } catch (error: unknown) {
-      console.error('Organize error:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
       setOrganizing(false);
@@ -704,11 +856,24 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => {
+                    setFormData({ ...formData, title: e.target.value });
+                    // Clear error when user starts typing
+                    if (validationErrors.title) {
+                      setValidationErrors({ ...validationErrors, title: '' });
+                    }
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    validationErrors.title 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'focus:ring-blue-500'
+                  }`}
                   placeholder="E.g., AI for Faculty Starter Kit"
                   required
                 />
+                {validationErrors.title && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors.title}</p>
+                )}
               </div>
 
               {/* Type */}
@@ -718,13 +883,73 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, type: e.target.value });
+                    // Clear fileUrl error when type changes
+                    if (validationErrors.fileUrl) {
+                      setValidationErrors({ ...validationErrors, fileUrl: '' });
+                    }
+                  }}
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
                   {RESOURCE_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => {
+                    setFormData({ ...formData, category: e.target.value });
+                    // Clear error when user selects
+                    if (validationErrors.category) {
+                      setValidationErrors({ ...validationErrors, category: '' });
+                    }
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    validationErrors.category 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'focus:ring-blue-500'
+                  }`}
+                  required
+                >
+                  <option value="">Select a category</option>
+                  {RESOURCE_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                {validationErrors.category && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors.category}</p>
+                )}
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Status <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  {STATUS_OPTIONS.map((status) => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
                     </option>
                   ))}
                 </select>
@@ -738,12 +963,67 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => {
+                  setFormData({ ...formData, description: e.target.value });
+                  // Clear error when user starts typing
+                  if (validationErrors.description) {
+                    setValidationErrors({ ...validationErrors, description: '' });
+                  }
+                }}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  validationErrors.description 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'focus:ring-blue-500'
+                }`}
                 rows={4}
                 placeholder="Describe what this resource includes and who it's for..."
                 required
               />
+              {validationErrors.description && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.description}</p>
+              )}
+            </div>
+
+            {/* File URL */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                File URL {['notion', 'ebook'].includes(formData.type) && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="url"
+                value={formData.fileUrl}
+                onChange={(e) => {
+                  setFormData({ ...formData, fileUrl: e.target.value });
+                  // Clear error when user starts typing
+                  if (validationErrors.fileUrl) {
+                    setValidationErrors({ ...validationErrors, fileUrl: '' });
+                  }
+                }}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  validationErrors.fileUrl 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'focus:ring-blue-500'
+                }`}
+                placeholder={
+                  formData.type === 'notion' 
+                    ? 'https://notion.so/your-template... or https://workspace.notion.site/page...' 
+                    : formData.type === 'ebook'
+                    ? 'https://example.com/ebook.pdf'
+                    : 'https://example.com/resource.pdf or upload file below'
+                }
+                required={['notion', 'ebook'].includes(formData.type)}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.type === 'notion' 
+                  ? 'Required: Notion share link (must contain notion.so or notion.site)' 
+                  : formData.type === 'ebook'
+                  ? 'Required: PDF link (must end with .pdf)'
+                  : 'Optional: URL path or upload file below'
+                }
+              </p>
+              {validationErrors.fileUrl && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.fileUrl}</p>
+              )}
             </div>
 
             {/* Tags */}
@@ -761,13 +1041,30 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
               <p className="text-xs text-gray-500 mt-1">Separate tags with commas</p>
             </div>
 
+            {/* Gated Access */}
+            <div>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={formData.gated}
+                  onChange={(e) => setFormData({ ...formData, gated: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium">
+                  Require email capture before access
+                </span>
+              </label>
+              <p className="text-xs text-gray-500 mt-1 ml-7">
+                When enabled, users must provide their email before accessing this resource
+              </p>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-4">
               {/* Main File */}
               <div>
                 <label className="block text-sm font-medium mb-1">
                   <FileText className="w-4 h-4 inline mr-1" />
-                  Resource File {/* @ts-ignore */}
-                  {!formData._isServerImport && <span className="text-red-500">*</span>}
+                  Resource File (Optional)
                   {/* @ts-ignore */}
                   {formData._isServerImport && (
                     <span className="text-xs text-green-600 ml-2">(From import folder)</span>
@@ -805,12 +1102,17 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
                     <input
                       id="file-input"
                       type="file"
-                      onChange={(e) => setFormData({ ...formData, file: e.target.files?.[0] || null })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, file: e.target.files?.[0] || null });
+                        // Clear fileUrl error when file is uploaded
+                        if (validationErrors.fileUrl) {
+                          setValidationErrors({ ...validationErrors, fileUrl: '' });
+                        }
+                      }}
                       className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      PDF, DOCX, XLSX, ZIP, etc. (Max 50MB)
+                      Upload a file OR use File URL above. PDF, DOCX, XLSX, ZIP, etc. (Max 50MB)
                     </p>
                   </>
                 )}
@@ -865,12 +1167,12 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
               {uploading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Uploading...
+                  Creating Resource...
                 </>
               ) : (
                 <>
                   <Upload className="w-5 h-5" />
-                  Upload Resource
+                  Create Resource
                 </>
               )}
             </button>
@@ -886,92 +1188,279 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-gray-500 mt-4">Loading resources...</p>
             </div>
-          ) : resources.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No resources uploaded yet.</p>
-              <p className="text-sm text-gray-400 mt-1">Upload your first resource using the form above.</p>
-            </div>
           ) : (
-            <div className="space-y-4">
-              {resources.map((resource) => (
-                <div
-                  key={resource._id}
-                  className="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all bg-white"
-                >
-                  <div className="flex gap-5">
-                    {/* Cover Image Preview */}
-                    <div className="flex-shrink-0">
-                      <div className="relative w-32 h-24 rounded-lg overflow-hidden border-2 border-gray-200">
-                        <img
-                          src={resource.coverImage || '/images/default-cover.svg'}
-                          alt={resource.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/images/default-cover.svg';
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1 text-center">
-                        {resource.coverImage?.includes('default') ? 'Placeholder' : 'Custom Cover'}
-                      </p>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-bold text-lg">{resource.title}</h3>
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-semibold">
-                              {RESOURCE_TYPES.find(t => t.value === resource.type)?.label || resource.type}
-                            </span>
-                          </div>
-                          
-                          <p className="text-sm text-gray-700 mt-2 leading-relaxed line-clamp-2">
-                            {resource.description}
-                          </p>
-                          
-                          {resource.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {resource.tags.map((tag) => (
-                                <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                                  #{tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                            <span>📄 {resource.mainFile?.split('/').pop() || 'No file'}</span>
-                            <span>📅 {new Date(resource.createdAt).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex flex-col gap-2">
-                          <a
-                            href={`/api/resources/download/${resource._id}`}
-                            className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition whitespace-nowrap text-center"
-                          >
-                            Download
-                          </a>
-                          <button
-                            onClick={() => handleDelete(resource._id)}
-                            className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
+            <>
+              {/* Resource Management Controls */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+                <div className="flex flex-col lg:flex-row gap-4 mb-4">
+                  {/* Search */}
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        placeholder="Search resources by title or description..."
+                        value={resourceSearch}
+                        onChange={(e) => setResourceSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
+
+                  {/* Type Filter */}
+                  <div className="lg:w-48">
+                    <select
+                      value={resourceTypeFilter}
+                      onChange={(e) => setResourceTypeFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Types</option>
+                      <option value="notion">Notion Template</option>
+                      <option value="ebook">E-Book</option>
+                      <option value="cheatsheet">Cheat Sheet</option>
+                      <option value="video">Video</option>
+                      <option value="scanned">Scanned</option>
+                    </select>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="lg:w-48">
+                    <select
+                      value={resourceStatusFilter}
+                      onChange={(e) => setResourceStatusFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="draft">Draft</option>
+                      <option value="live">Live</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Results Summary */}
+                <div className="text-sm text-gray-600">
+                  Showing {paginatedResources.length} of {filteredResources.length} resources
+                  {filteredResources.length !== resources.length && (
+                    <span className="text-blue-600 ml-2">
+                      (filtered from {resources.length} total)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Resources List */}
+              {filteredResources.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">
+                    {resources.length === 0 
+                      ? 'No resources uploaded yet.' 
+                      : 'No resources match your current filters.'
+                    }
+                  </p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    {resources.length === 0 
+                      ? 'Upload your first resource using the form above.' 
+                      : 'Try adjusting your search or filter criteria.'
+                    }
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {paginatedResources.map((resource) => (
+                    <div
+                      key={resource._id}
+                      className="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all bg-white"
+                    >
+                      <div className="flex gap-5">
+                        {/* Cover Image Preview */}
+                        <div className="flex-shrink-0">
+                          <div className="relative w-32 h-24 rounded-lg overflow-hidden border-2 border-gray-200">
+                            <img
+                              src={resource.coverImage || '/images/default-cover.svg'}
+                              alt={resource.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/images/default-cover.svg';
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1 text-center">
+                            {resource.coverImage?.includes('default') ? 'Placeholder' : 'Custom Cover'}
+                          </p>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-bold text-lg">{resource.title}</h3>
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-semibold">
+                                  {RESOURCE_TYPES.find(t => t.value === resource.type)?.label || resource.type}
+                                </span>
+                                {resource.gated && (
+                                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-semibold">
+                                    Gated
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <p className="text-sm text-gray-700 mt-2 leading-relaxed line-clamp-2">
+                                {resource.description}
+                              </p>
+                              
+                              {resource.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {resource.tags.map((tag) => (
+                                    <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                                      #{tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                                <span>📄 {resource.mainFile?.split('/').pop() || resource.fileUrl || 'No file'}</span>
+                                <span>📅 {new Date(resource.createdAt).toLocaleDateString()}</span>
+                                <span>📂 {resource.category}</span>
+                              </div>
+                            </div>
+
+                            {/* Status and Actions */}
+                            <div className="flex flex-col gap-2">
+                              {/* Status Dropdown */}
+                              <select
+                                value={resource.status}
+                                onChange={(e) => handleStatusChange(resource._id, e.target.value as 'draft' | 'live' | 'archived')}
+                                className="px-3 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              >
+                                <option value="draft">Draft</option>
+                                <option value="live">Live</option>
+                                <option value="archived">Archived</option>
+                              </select>
+
+                              {/* Action Buttons */}
+                              <div className="flex gap-2">
+                                <a
+                                  href={resource.fileUrl || `/api/resources/download/${resource._id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition whitespace-nowrap flex items-center gap-1"
+                                >
+                                  {resource.type === 'notion' ? (
+                                    <>
+                                      <Eye className="w-3 h-3" />
+                                      Open
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download className="w-3 h-3" />
+                                      Download
+                                    </>
+                                  )}
+                                </a>
+                                <button
+                                  onClick={() => setDeleteConfirmId(resource._id)}
+                                  className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition flex items-center gap-1"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
+                        Page {currentPage} of {totalPages}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                          if (pageNum > totalPages) return null;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`px-3 py-1 text-sm border rounded ${
+                                currentPage === pageNum
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Delete Resource</h2>
+                  <p className="text-sm text-gray-600">This action cannot be undone.</p>
+                </div>
+              </div>
+              
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to delete this resource? This will permanently remove it from the database.
+              </p>
+              
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(deleteConfirmId)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                >
+                  Delete Resource
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
@@ -1012,7 +1501,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     };
   } catch (error: unknown) {
-    console.error('Admin page SSR error:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     
     return {
       redirect: {

@@ -66,7 +66,8 @@ export default function TestimonialSubmitPage() {
         });
       }
     } catch (error: unknown) {
-      console.error('Submit error:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       setMessage({ 
         type: 'error', 
         text: 'Network error. Please try again.' 

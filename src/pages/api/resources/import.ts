@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
 import { Resource } from '@/models/Resource';
 import { requireAdmin } from '@/utils/adminAuth';
+import { normalizeTypeValue, isValidTypeValue, getTypeValidationError } from '@/lib/resourceTypeMapper';
 import fs from 'fs';
 import path from 'path';
 
@@ -24,12 +25,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await connectDB();
 
   try {
-    const { title, description, type, tags, sourceFilePath, sourceCoverPath } = req.body;
+    const { 
+      title, 
+      description, 
+      type, 
+      category, 
+      tags, 
+      gated, 
+      status, 
+      sourceFilePath, 
+      sourceCoverPath 
+    } = req.body;
 
     // Validate required fields
     if (!title || !description || !type || !sourceFilePath) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ 
+        error: 'Missing required fields: title, description, type, and sourceFilePath are required' 
+      });
     }
+
+    // Normalize and validate type for scanned files
+    const normalizedType = normalizeTypeValue(type);
+    if (!isValidTypeValue(type)) {
+      console.error('Invalid type value in import:', { originalType: type, normalizedType });
+      return res.status(400).json({ 
+        error: getTypeValidationError()
+      });
+    }
+    
+    // Use the normalized type
+    const finalType = normalizedType;
 
     // Validate source file exists
     if (!fs.existsSync(sourceFilePath)) {
@@ -37,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Create type directory if it doesn't exist
-    const typeDir = path.join(process.cwd(), 'public', 'resources', type);
+    const typeDir = path.join(process.cwd(), 'public', 'resources', finalType);
     if (!fs.existsSync(typeDir)) {
       fs.mkdirSync(typeDir, { recursive: true });
     }
@@ -54,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Copy main file to destination
     fs.copyFileSync(sourceFilePath, destFilePath);
 
-    const resourceFilePath = `/resources/${type}/${filename}`;
+    const resourceFilePath = `/resources/${finalType}/${filename}`;
 
     // Handle optional cover image
     let coverImagePath: string | undefined = undefined;
@@ -82,13 +107,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Parse tags
     const tagArray = tags ? tags.split(',').map((tag: string) => tag.trim()).filter(Boolean) : [];
 
-    // Save to database
+    // Generate slug from title
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+
+    // Check if slug already exists
+    const existingResource = await Resource.findOne({ slug });
+    if (existingResource) {
+      return res.status(400).json({ 
+        error: 'A resource with this title already exists. Please choose a different title.' 
+      });
+    }
+
+    // Save to database with new structure
     const resourceData: any = {
       title,
       description,
-      type,
-      filePath: resourceFilePath,
+      type: finalType, // Use the normalized type
+      slug,
+      category: category || 'Other', // Default category if not provided
+      filePath: resourceFilePath, // For scanned resources, use filePath
+      fileUrl: finalType !== 'scanned' ? resourceFilePath : undefined, // Only set fileUrl for non-scanned resources
       tags: tagArray,
+      gated: gated === 'true' || false, // Default to false
+      status: status || 'draft', // Default to draft for imported resources
     };
 
     if (coverImagePath) {
@@ -104,7 +150,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: unknown) {
-    console.error('Import error:', error);
-    return res.status(500).json({ error: 'Failed to import resource' });
+    // Log full error stack for debugging
+    console.error('Import resource error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error
+    });
+    
+    // Return clean error message to UI
+    if (error instanceof Error && error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        error: 'Invalid resource data. Please check all fields and try again.' 
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: 'Failed to import resource. Please try again.' 
+    });
   }
 }

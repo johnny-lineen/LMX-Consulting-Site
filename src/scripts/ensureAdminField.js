@@ -122,8 +122,8 @@ async function ensureAdminField() {
     await mongoose.disconnect();
     console.log('Database connection closed');
   } catch (error) {
-    console.error('\n❌ Migration Error:', error.message);
-    console.error(error);
+    console.error('\n❌ Migration Error:', error instanceof Error ? error.message : JSON.stringify(error));
+    console.error('[ERROR OBJECT]:', error);
     await mongoose.disconnect();
     process.exit(1);
   }

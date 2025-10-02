@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Count total insights
-    const totalInsights = Object.values(insights).reduce((total, array) => {
+    const totalInsights = Object.values(insights).reduce((total: number, array: any) => {
       return total + (Array.isArray(array) ? array.length : 0);
     }, 0);
 
@@ -42,12 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       insights: insights,
       count: totalInsights,
       categories: Object.keys(insights).filter(key => 
-        Array.isArray(insights[key]) && insights[key].length > 0
+        Array.isArray((insights as any)[key]) && (insights as any)[key].length > 0
       )
     });
 
   } catch (error: unknown) {
-    console.error('Error testing restructured insights:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

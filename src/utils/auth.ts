@@ -13,6 +13,8 @@ export interface JWTPayload {
   email: string;
   name: string;
   isAdmin?: boolean;
+  exp?: number;
+  iat?: number;
 }
 
 export function generateToken(user: IUser): string {
@@ -23,12 +25,13 @@ export function generateToken(user: IUser): string {
     isAdmin: user.isAdmin
   };
 
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign(payload, JWT_SECRET!, { expiresIn: '7d' });
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, JWT_SECRET!);
+    return decoded as JWTPayload;
   } catch (error) {
     return null;
   }
@@ -77,7 +80,7 @@ export function isLoggedIn(): boolean {
   
   try {
     const payload = jwt.decode(token) as JWTPayload;
-    return payload && payload.exp && payload.exp > Date.now() / 1000;
+    return Boolean(payload && payload.exp && payload.exp > Date.now() / 1000);
   } catch {
     return false;
   }

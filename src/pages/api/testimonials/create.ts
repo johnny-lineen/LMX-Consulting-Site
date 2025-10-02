@@ -32,9 +32,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let userModel: 'User' | 'TestimonialUser';
     let userRef;
 
-    if (existingUser) {
+    if (existingUser && !Array.isArray(existingUser)) {
       userModel = 'User';
-      userRef = existingUser._id;
+      userRef = (existingUser._id as any).toString();
     } else {
       // Find or create testimonial-only user
       let tUser = await TestimonialUser.findOne({ email: normalizedEmail });
@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
       userModel = 'TestimonialUser';
-      userRef = tUser!._id;
+      userRef = tUser!._id.toString();
     }
 
     const doc = await Testimonial.create({
@@ -66,7 +66,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ success: true, testimonialId: doc._id, userModel, userRef });
   } catch (error: unknown) {
-    console.error('[testimonials/create] Error:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

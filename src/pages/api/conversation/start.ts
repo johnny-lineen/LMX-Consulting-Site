@@ -209,7 +209,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (error: unknown) {
     // Catch-all error handler
-    console.error('[conversation/start] Unexpected error:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     
     return res.status(500).json({ 
       error: 'Internal server error',

@@ -435,13 +435,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error: unknown) {
     console.error('[SCAN API] ❌ Scan error caught:');
     console.error('[SCAN API] Error message:', error instanceof Error ? error.message : String(error));
-    console.error('[SCAN API] Error stack:', error.stack);
-    console.error('[SCAN API] Error code:', error.code);
+    console.error('[SCAN API] Error stack:', error instanceof Error ? error.stack : undefined);
+    console.error('[SCAN API] Error code:', typeof error === 'object' && error !== null && 'code' in error ? (error as { code: unknown }).code : 'UNKNOWN');
     
     return res.status(500).json({ 
       error: 'Failed to scan and import resources',
-      details: error.message,
-      errorCode: error.code || 'UNKNOWN',
+      details: error instanceof Error ? error.message : JSON.stringify(error),
+      errorCode: typeof error === 'object' && error !== null && 'code' in error ? String((error as { code: unknown }).code) : 'UNKNOWN',
       attemptedPath: IMPORT_BASE_FOLDER,
       currentWorkingDirectory: process.cwd()
     });

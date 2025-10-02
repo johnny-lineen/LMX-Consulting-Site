@@ -67,7 +67,7 @@ async function checkAdmin(email) {
     await mongoose.disconnect();
     console.log('\nDatabase connection closed');
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error:', error instanceof Error ? error.message : JSON.stringify(error));
     await mongoose.disconnect();
     process.exit(1);
   }

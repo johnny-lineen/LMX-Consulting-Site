@@ -76,10 +76,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: unknown) {
-    console.error('[ORGANIZE API] Error:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     return res.status(500).json({
       error: 'Failed to organize resources',
-      details: error instanceof Error ? error.message : 'Unknown error',
+      details: 'Internal server error',
     });
   }
 }

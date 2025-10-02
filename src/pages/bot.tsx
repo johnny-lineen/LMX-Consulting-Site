@@ -61,7 +61,8 @@ export default function BotPage() {
     try {
       await sendMessage(messageText);
     } catch (error: unknown) {
-      console.error('Error sending message:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       setInputValue(messageText);
     } finally {
       setIsGenerating(false);

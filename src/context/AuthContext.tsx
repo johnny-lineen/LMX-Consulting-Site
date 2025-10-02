@@ -58,7 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: data.error };
       }
     } catch (error: unknown) {
-      console.error('Login error:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       return { success: false, error: 'Network error' };
     }
   };
@@ -82,7 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: data.error };
       }
     } catch (error: unknown) {
-      console.error('Signup error:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       return { success: false, error: 'Network error' };
     }
   };
@@ -92,7 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
     } catch (error: unknown) {
-      console.error('Logout error:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
     }
   };
 

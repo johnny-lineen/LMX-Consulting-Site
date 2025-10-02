@@ -33,7 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     form.parse(req, async (err, fields, files) => {
       if (err) {
-        console.error('Form parse error:', err);
+        console.error('[ERROR]:', err instanceof Error ? err.message : String(err));
+        if (err instanceof Error) console.error(err.stack);
         return res.status(500).json({ error: 'Failed to parse form data' });
       }
 
@@ -134,7 +135,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     });
   } catch (error: unknown) {
-    console.error('Upload error:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     return res.status(500).json({ error: 'Failed to upload resource' });
   }
 }

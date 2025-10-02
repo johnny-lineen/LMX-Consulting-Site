@@ -26,7 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       return res.status(200).json({ resources });
     } catch (error: unknown) {
-      console.error('Error fetching resources:', error);
+      console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) console.error(error.stack);
       return res.status(500).json({ error: 'Failed to fetch resources' });
     }
   }

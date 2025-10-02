@@ -37,7 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ success: true, items, total, nextSkip: hasMore ? nextSkip : undefined });
   } catch (error: unknown) {
-    console.error('[testimonials/list] Error:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

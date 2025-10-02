@@ -3,68 +3,126 @@ import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CompactResourceCard from '@/components/CompactResourceCard';
 import ResourceModal from '@/components/ResourceModal';
-import { FileText } from 'lucide-react';
+import EmailCaptureModal from '@/components/EmailCaptureModal';
+import { FileText, Filter } from 'lucide-react';
+import { PublicResource, RESOURCE_TYPE_LABELS, RESOURCE_BUTTON_TEXT } from '@/types/resource';
 
-interface Resource {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  slug: string;
+interface Resource extends PublicResource {
   mainFile?: string;
-  coverImage: string; // Always present (actual or placeholder)
-  images?: string[]; // Additional product/preview images
-  tags: string[];
-  createdAt: string;
+  images?: string[];
 }
 
-const RESOURCE_TYPE_LABELS: Record<string, string> = {
-  'ebook': 'E-Book',
-  'checklist': 'Checklist',
-  'guide': 'Guide',
-  'notion-template': 'Notion Template',
-  'toolkit': 'Toolkit',
-  'other': 'Other',
-};
+const RESOURCE_CATEGORIES = [
+  'All Categories',
+  'AI & Automation',
+  'Productivity',
+  'Education',
+  'Business',
+  'Marketing',
+  'Design',
+  'Development',
+  'Writing',
+  'Finance',
+  'Health & Wellness',
+  'Other'
+];
 
 export default function ResourcesPage() {
     const [resources, setResources] = useState<Resource[]>([]);
+    const [allResources, setAllResources] = useState<Resource[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedType, setSelectedType] = useState<string>('all');
+    const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
     const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+    const [availableCategories, setAvailableCategories] = useState<string[]>([]);
     const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [pendingResourceAccess, setPendingResourceAccess] = useState<{resource: Resource; action: () => void} | null>(null);
 
     useEffect(() => {
-        fetchResources();
-    }, [selectedType]);
+        fetchAllResources();
+    }, []);
 
-    const fetchResources = async () => {
+    // Separate effect for filtering when filters change
+    useEffect(() => {
+        if (allResources.length > 0) {
+            applyFilters();
+        }
+    }, [selectedType, selectedCategory, allResources]);
+
+    const fetchAllResources = async () => {
         try {
-            const url = selectedType === 'all' 
-                ? '/api/resources/list' 
-                : `/api/resources/list?type=${selectedType}`;
+            setLoading(true);
+            const response = await fetch('/api/resources/list');
             
-            const response = await fetch(url);
             if (response.ok) {
                 const data = await response.json();
-                setResources(data.resources);
+                setAllResources(data.resources);
                 
-                // Extract unique types
+                // Extract unique types and categories from all resources
                 const types = Array.from(
                     new Set(data.resources.map((r: Resource) => r.type))
                 ) as string[];
                 setAvailableTypes(types);
+                
+                const categories = Array.from(
+                    new Set(data.resources.map((r: Resource) => r.category))
+                ) as string[];
+                setAvailableCategories(categories);
             }
         } catch (error: unknown) {
-            console.error('Error fetching resources:', error);
+            console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+            if (error instanceof Error) console.error(error.stack);
         } finally {
             setLoading(false);
         }
     };
 
+    const applyFilters = () => {
+        let filtered = [...allResources];
+
+        // Apply type filter
+        if (selectedType !== 'all') {
+            filtered = filtered.filter(resource => resource.type === selectedType);
+        }
+
+        // Apply category filter
+        if (selectedCategory !== 'All Categories') {
+            filtered = filtered.filter(resource => resource.category === selectedCategory);
+        }
+
+        setResources(filtered);
+    };
+
+    const handleResourceAccess = (resource: Resource) => {
+        if (resource.gated) {
+            // Show email capture modal for gated resources
+            setPendingResourceAccess({
+                resource,
+                action: () => window.open(resource.fileUrl, '_blank')
+            });
+            setIsEmailModalOpen(true);
+        } else {
+            // Direct access for non-gated resources
+            window.open(resource.fileUrl, '_blank');
+        }
+    };
+
+    const handleEmailSuccess = (resourceUrl: string) => {
+        // For logged-in users, we need to get the actual fileUrl from the pending resource
+        const urlToOpen = resourceUrl === window.location.href && pendingResourceAccess 
+            ? pendingResourceAccess.resource.fileUrl 
+            : resourceUrl;
+        window.open(urlToOpen, '_blank');
+    };
+
     const handleDownload = (resourceId: string, title: string) => {
-        window.location.href = `/api/resources/download/${resourceId}`;
+        // Find the resource to check if it's gated
+        const resource = resources.find(r => r.id === resourceId);
+        if (resource) {
+            handleResourceAccess(resource);
+        }
     };
 
     const handleOpenResource = (resource: Resource) => {
@@ -92,37 +150,75 @@ export default function ResourcesPage() {
                         </p>
                     </div>
 
-                    {/* Type Filter */}
-                    {availableTypes.length > 1 && (
-                        <div className="mb-8">
-                            <h2 className="text-sm font-semibold text-gray-600 mb-3">Filter by Type</h2>
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    onClick={() => setSelectedType('all')}
-                                    className={`px-4 py-2 rounded-lg font-medium transition ${
-                                        selectedType === 'all'
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                                    }`}
-                                >
-                                    All Resources
-                                </button>
-                                {availableTypes.map((type) => (
+                    {/* Filters */}
+                    <div className="mb-8 space-y-6">
+                        {/* Type Filter */}
+                        {availableTypes.length > 1 && (
+                            <div>
+                                <h2 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
+                                    <Filter className="w-4 h-4" />
+                                    Filter by Type
+                                </h2>
+                                <div className="flex flex-wrap gap-2">
                                     <button
-                                        key={type}
-                                        onClick={() => setSelectedType(type)}
+                                        onClick={() => setSelectedType('all')}
                                         className={`px-4 py-2 rounded-lg font-medium transition ${
-                                            selectedType === type
+                                            selectedType === 'all'
                                                 ? 'bg-blue-600 text-white shadow-md'
                                                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                                         }`}
                                     >
-                                        {RESOURCE_TYPE_LABELS[type] || type}
+                                        All Types
                                     </button>
-                                ))}
+                                    {availableTypes.map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setSelectedType(type)}
+                                            className={`px-4 py-2 rounded-lg font-medium transition ${
+                                                selectedType === type
+                                                    ? 'bg-blue-600 text-white shadow-md'
+                                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                            }`}
+                                        >
+                                            {RESOURCE_TYPE_LABELS[type] || type}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+
+                        {/* Category Filter */}
+                        {availableCategories.length > 1 && (
+                            <div>
+                                <h2 className="text-sm font-semibold text-gray-600 mb-3">Filter by Category</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => setSelectedCategory('All Categories')}
+                                        className={`px-4 py-2 rounded-lg font-medium transition ${
+                                            selectedCategory === 'All Categories'
+                                                ? 'bg-purple-600 text-white shadow-md'
+                                                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                        }`}
+                                    >
+                                        All Categories
+                                    </button>
+                                    {availableCategories.map((category) => (
+                                        <button
+                                            key={category}
+                                            onClick={() => setSelectedCategory(category)}
+                                            className={`px-4 py-2 rounded-lg font-medium transition ${
+                                                selectedCategory === category
+                                                    ? 'bg-purple-600 text-white shadow-md'
+                                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                            }`}
+                                        >
+                                            {category}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Resources Grid - Compact Cards with Modal */}
                     {loading ? (
@@ -150,6 +246,8 @@ export default function ResourcesPage() {
                                         id={resource.id}
                                         title={resource.title}
                                         coverImage={resource.coverImage}
+                                        type={resource.type}
+                                        gated={resource.gated}
                                         onOpen={() => handleOpenResource(resource)}
                                         onDownload={handleDownload}
                                     />
@@ -165,6 +263,19 @@ export default function ResourcesPage() {
                             />
                         </>
                     )}
+
+                    {/* Email Capture Modal */}
+                    <EmailCaptureModal
+                        isOpen={isEmailModalOpen}
+                        onClose={() => {
+                            setIsEmailModalOpen(false);
+                            setPendingResourceAccess(null);
+                        }}
+                        onSuccess={handleEmailSuccess}
+                        resourceTitle={pendingResourceAccess?.resource.title || ''}
+                        resourceType={pendingResourceAccess?.resource.type || ''}
+                        resourceId={pendingResourceAccess?.resource.id}
+                    />
                 </section>
             </Layout>
         </ProtectedRoute>

@@ -1,61 +1,76 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '@/lib/mongodb';
-import { Resource, IResource } from '@/models/Resource';
+import { Resource } from '@/models/Resource';
 import { requireAdmin } from '@/utils/adminAuth';
-import fs from 'fs';
-import path from 'path';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await connectDB();
-
   const { id } = req.query;
 
   if (!id || typeof id !== 'string') {
-    return res.status(400).json({ error: 'Invalid resource ID' });
+    return res.status(400).json({ error: 'Resource ID is required' });
   }
 
-  if (req.method === 'GET') {
-    try {
-      const resource = await Resource.findById(id).lean<IResource | null>();
+  // Check admin authentication
+  const adminUser = await requireAdmin(req, res);
+  if (!adminUser) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-      if (!resource) {
+  try {
+    await connectDB();
+
+    if (req.method === 'PATCH') {
+      const { status } = req.body;
+
+      // Validate status
+      const validStatuses = ['draft', 'live', 'archived'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ 
+          error: 'Invalid status. Must be one of: draft, live, archived' 
+        });
+      }
+
+      const updatedResource = await Resource.findByIdAndUpdate(
+        id,
+        { status, updatedAt: new Date() },
+        { new: true }
+      );
+
+      if (!updatedResource) {
         return res.status(404).json({ error: 'Resource not found' });
       }
 
-      return res.status(200).json({ resource });
-    } catch (error: unknown) {
-      console.error('Error fetching resource:', error);
-      return res.status(500).json({ error: 'Failed to fetch resource' });
+      return res.status(200).json({
+        success: true,
+        resource: updatedResource,
+        message: 'Resource status updated successfully'
+      });
     }
-  }
 
-  if (req.method === 'DELETE') {
-    // Check admin authentication
-    const isAdmin = await requireAdmin(req, res);
-    if (!isAdmin) return;
+    if (req.method === 'DELETE') {
+      const deletedResource = await Resource.findByIdAndDelete(id);
 
-    try {
-      const resource = await Resource.findById(id).lean<IResource | null>();
-
-      if (!resource) {
+      if (!deletedResource) {
         return res.status(404).json({ error: 'Resource not found' });
       }
 
-      // Delete the file from filesystem
-      const filePath = path.join(process.cwd(), 'public', resource.filePath);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-
-      // Delete from database
-      await Resource.findByIdAndDelete(id);
-
-      return res.status(200).json({ success: true, message: 'Resource deleted' });
-    } catch (error: unknown) {
-      console.error('Error deleting resource:', error);
-      return res.status(500).json({ error: 'Failed to delete resource' });
+      return res.status(200).json({
+        success: true,
+        message: 'Resource deleted successfully'
+      });
     }
-  }
 
-  return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
+
+  } catch (error: unknown) {
+    console.error('Resource API error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error
+    });
+
+    return res.status(500).json({ 
+      error: 'Internal server error' 
+    });
+  }
 }

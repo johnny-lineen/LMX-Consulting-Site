@@ -1,18 +1,11 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { X, Download, Tag, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PublicResource, RESOURCE_TYPE_LABELS, RESOURCE_BUTTON_TEXT } from '@/types/resource';
 
-interface Resource {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  slug: string;
+interface Resource extends PublicResource {
   mainFile?: string;
-  coverImage: string;
   images?: string[];
-  tags: string[];
-  createdAt: string;
 }
 
 interface ResourceModalProps {
@@ -22,14 +15,7 @@ interface ResourceModalProps {
   onDownload: (resourceId: string, title: string) => void;
 }
 
-const RESOURCE_TYPE_LABELS: Record<string, string> = {
-  'ebook': 'E-Book',
-  'checklist': 'Checklist',
-  'guide': 'Guide',
-  'notion-template': 'Notion Template',
-  'toolkit': 'Toolkit',
-  'other': 'Other',
-};
+// Resource type labels are now imported from types/resource.ts
 
 export default function ResourceModal({ resource, isOpen, onClose, onDownload }: ResourceModalProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -168,10 +154,13 @@ export default function ResourceModal({ resource, isOpen, onClose, onDownload }:
 
         {/* Content */}
         <div className="p-6 md:p-8">
-          {/* Type Badge */}
-          <div className="mb-4">
+          {/* Type Badge and Category */}
+          <div className="mb-4 flex flex-wrap gap-2">
             <span className="inline-block text-sm font-semibold bg-blue-100 text-blue-800 px-3 py-1.5 rounded-lg">
               {RESOURCE_TYPE_LABELS[resource.type] || resource.type}
+            </span>
+            <span className="inline-block text-sm font-semibold bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg">
+              {resource.category}
             </span>
           </div>
 
@@ -221,7 +210,7 @@ export default function ResourceModal({ resource, isOpen, onClose, onDownload }:
             className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
           >
             <Download className="w-6 h-6" />
-            Download Resource
+            {RESOURCE_BUTTON_TEXT[resource.type] || 'Download Resource'}
           </button>
         </div>
       </div>

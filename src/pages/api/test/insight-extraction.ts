@@ -23,11 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       message: 'Insight extraction test completed',
       insights,
-      count: insights.length
+      count: insights && typeof insights === 'object' ? Object.keys(insights).length : 0
     });
 
   } catch (error: unknown) {
-    console.error('Error testing insight extraction:', error);
+    console.error('[ERROR]:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) console.error(error.stack);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
