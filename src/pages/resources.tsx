@@ -138,16 +138,16 @@ export default function ResourcesPage() {
     return (
         <ProtectedRoute>
             <Layout
-                title="Resources"
-                description="Premium toolkits and templates for your success."
+                title="AI for Microsoft 365 Resource Library"
+                description="Ready-to-use templates, playbooks, and guides for integrating AI into Microsoft 365 workflows."
             >
                 <section className="py-12 md:py-16">
                     <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
                         {/* Header */}
                         <div className="mb-8">
-                        <h1 className="text-4xl font-bold">Resource Library</h1>
-                        <p className="text-muted mt-2 text-lg">
-                            Download valuable resources to boost your productivity and leverage AI effectively.
+                        <h1 className="font-display text-4xl font-bold text-text-primary">📚 Your AI for Microsoft 365 Resource Library</h1>
+                        <p className="text-text-secondary mt-2 text-lg">
+                            From ready-to-use Notion templates to step-by-step playbooks and eBooks, our library equips you with practical tools to integrate AI into your daily Microsoft 365 workflows. Stay ahead with curated content designed for consultants, teams, and professionals.
                         </p>
                     </div>
 

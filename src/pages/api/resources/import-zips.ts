@@ -11,7 +11,7 @@ import path from 'path';
 
 import { config } from '@/lib/config';
 
-const DESKTOP_IMPORT_PATH = config.resources.importPath;
+const DESKTOP_IMPORT_PATH = config.resources.importPath || process.cwd();
 const ARCHIVE_PATH = path.join(DESKTOP_IMPORT_PATH, 'archive');
 const PUBLIC_RESOURCES_PATH = path.join(process.cwd(), 'public', 'resources');
 const TEMP_EXTRACT_PATH = path.join(process.cwd(), 'temp', 'extracts');

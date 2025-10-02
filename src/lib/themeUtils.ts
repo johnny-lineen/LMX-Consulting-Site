@@ -27,14 +27,14 @@ export const buttonClasses = {
     xl: 'px-6 py-3.5 text-lg rounded-xl',
   },
 
-  // Style variants - dark theme with glow effects
+  // Style variants - light theme with professional styling
   variant: {
-    primary: 'bg-brand-primary text-bg-primary hover:bg-interactive-hover hover:shadow-glow-md focus:ring-brand-primary focus:ring-2 transition-all duration-200 font-medium',
-    secondary: 'border-2 border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-bg-primary hover:shadow-glow-sm focus:ring-brand-primary focus:ring-2 transition-all duration-200',
+    primary: 'bg-brand-primary text-brand-secondary hover:bg-interactive-hover hover:shadow-glow-md focus:ring-brand-primary focus:ring-2 transition-all duration-200 font-medium',
+    secondary: 'border-2 border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-brand-secondary hover:shadow-glow-sm focus:ring-brand-primary focus:ring-2 transition-all duration-200',
     outline: 'border border-border-primary text-text-primary hover:border-brand-primary hover:text-brand-primary hover:shadow-glow-sm focus:ring-brand-primary focus:ring-2 transition-all duration-200',
     ghost: 'text-text-secondary hover:text-brand-primary hover:bg-bg-secondary transition-colors duration-200',
-    danger: 'bg-status-error text-text-primary hover:bg-red-600 hover:shadow-glow-sm focus:ring-status-error focus:ring-2 transition-all duration-200',
-    success: 'bg-status-success text-bg-primary hover:bg-green-400 hover:shadow-glow-sm focus:ring-status-success focus:ring-2 transition-all duration-200',
+    danger: 'bg-status-error text-brand-secondary hover:bg-red-600 hover:shadow-glow-sm focus:ring-status-error focus:ring-2 transition-all duration-200',
+    success: 'bg-status-success text-brand-secondary hover:bg-green-400 hover:shadow-glow-sm focus:ring-status-success focus:ring-2 transition-all duration-200',
   }
 };
 
@@ -42,7 +42,7 @@ export const buttonClasses = {
  * Card class builder - creates consistent card styles
  */
 export const cardClasses = {
-  // Base card classes - dark theme
+  // Base card classes - light theme
   base: 'bg-bg-secondary border border-border-primary rounded-xl transition-all duration-300',
   
   // Padding variants
@@ -70,8 +70,8 @@ export const cardClasses = {
  * Input class builder - creates consistent input styles
  */
 export const inputClasses = {
-  // Base input classes - dark theme
-  base: 'w-full border rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 bg-bg-tertiary',
+  // Base input classes - light theme
+  base: 'w-full border rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 bg-bg-primary',
   
   // Size variants
   size: {
@@ -93,14 +93,14 @@ export const inputClasses = {
  * Text class builder - creates consistent typography styles
  */
 export const textClasses = {
-  // Heading styles
+  // Heading styles - using serif fonts for academic feel
   heading: {
-    h1: 'text-4xl md:text-5xl font-bold text-text-primary leading-tight',
-    h2: 'text-2xl md:text-3xl font-semibold text-text-primary',
-    h3: 'text-xl font-semibold text-text-primary',
-    h4: 'text-lg font-semibold text-text-primary',
-    h5: 'text-base font-semibold text-text-primary',
-    h6: 'text-sm font-semibold text-text-primary',
+    h1: 'text-4xl md:text-5xl font-display font-bold text-text-primary leading-tight',
+    h2: 'text-2xl md:text-3xl font-display font-semibold text-text-primary',
+    h3: 'text-xl font-display font-semibold text-text-primary',
+    h4: 'text-lg font-display font-semibold text-text-primary',
+    h5: 'text-base font-display font-semibold text-text-primary',
+    h6: 'text-sm font-display font-semibold text-text-primary',
   },
 
   // Body text styles

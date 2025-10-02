@@ -10,7 +10,7 @@ import path from 'path';
 import { config } from '@/lib/config';
 
 const getImportBasePath = (): string => {
-  const importPath = config.resources.importPath;
+  const importPath = config.resources.importPath || process.cwd();
   console.log('[SCAN] Using import path:', importPath);
   return importPath;
 };

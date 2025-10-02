@@ -9,6 +9,10 @@ import { createButtonClass, createContainerClass, cn } from '@/lib/themeUtils'
 /**
  * Responsive Navbar using brand.nav for links.
  * Keeps the brand cohesive and easy to extend.
+ * 
+ * Design Decision: Uses Merriweather serif for brand name to reinforce academic credibility,
+ * while maintaining clean Inter sans-serif for navigation links. Navy primary color
+ * creates professional authority consistent with Penn State aesthetic.
  */
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -23,28 +27,28 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-bg-primary/95 backdrop-blur border-b border-border-primary">
+      <header className="sticky top-0 z-40 bg-bg-primary/95 backdrop-blur border-b border-border-primary shadow-soft">
         <div className={createContainerClass('xl', 'flex h-16 items-center justify-between')}>
           <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity group">
-            <div className="w-8 h-8 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-secondary shadow-glow-sm group-hover:shadow-glow-md transition-all duration-200" />
-            <span className="font-semibold text-text-primary group-hover:text-brand-primary transition-colors duration-200">{brand.name}</span>
+            <div className="w-8 h-8 rounded-2xl bg-gradient-to-br from-brand-primary to-interactive-hover shadow-glow-sm group-hover:shadow-glow-md transition-all duration-200" />
+            <span className="font-display font-semibold text-text-primary group-hover:text-brand-primary transition-colors duration-200">{brand.name}</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">
             {brand.nav.map(item => (
-              <Link 
-                key={item.href} 
-                href={item.href} 
-                className="text-sm text-text-primary hover:text-brand-primary transition-colors"
-              >
-                {item.label}
-              </Link>
+                <Link 
+                  key={item.href} 
+                  href={item.href} 
+                  className="text-sm font-medium text-text-primary hover:text-brand-primary transition-colors duration-200"
+                >
+                  {item.label}
+                </Link>
             ))}
             <Link 
-              href="/consultation" 
+              href="/community" 
               className={createButtonClass('primary', 'sm')}
             >
-              Book Consultation
+              Join Community
             </Link>
             
             {/* Auth Section */}
@@ -122,11 +126,11 @@ export default function Navbar() {
                 </Link>
               ))}
               <Link 
-                href="/consultation" 
+                href="/community" 
                 className="py-2 font-medium text-brand-primary hover:text-interactive-hover transition-colors" 
                 onClick={()=>setOpen(false)}
               >
-                Book Consultation
+                Join Community
               </Link>
               
               {/* Mobile Auth Section */}

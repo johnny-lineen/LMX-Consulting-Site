@@ -116,7 +116,10 @@ export const config = {
   
   // Resource Management
   resources: {
-    importPath: getOptionalEnvVar('RESOURCE_IMPORT_PATH')
+    importPath: getOptionalEnvVar('RESOURCE_IMPORT_PATH') || 
+      (process.platform === 'win32' 
+        ? 'C:/Users/jline/OneDrive/Desktop/resources' 
+        : '/resources-import')
   },
   
   // Public configuration (safe for client-side)

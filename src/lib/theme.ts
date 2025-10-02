@@ -78,11 +78,12 @@ export interface BrandConfig {
 
 export const brand: BrandConfig = {
   name: "LMX Consulting",
-  tagline: "Harness AI to save 10+ hours/week in Microsoft 365",
+  tagline: "The Go-To Hub for AI in Microsoft 365",
   nav: [
     { label: "Home", href: "/" },
-    { label: "Consultation", href: "/consultation" },
+    { label: "Community", href: "/community" },
     { label: "Resources", href: "/resources" },
+    { label: "Prompts", href: "/prompts" },
     { label: "Bot", href: "/bot" },
   ],
 };
@@ -92,67 +93,67 @@ export const brand: BrandConfig = {
 // ============================================================================
 
 export const colors = {
-  // Primary brand colors - IBM-inspired dark theme
+  // Primary brand colors - Penn State-inspired professional theme
   brand: {
-    primary: '#00E5FF',      // Teal/Aqua - Main CTA buttons, charts, highlights, active states
-    secondary: '#2979FF',    // Cyan/Blue - Secondary buttons, subtle callouts
-    accent: '#14F1D9',       // Alternative teal - Special highlights and accents
+    primary: '#041E42',      // Penn State Navy - Main brand color, headers, primary CTAs
+    secondary: '#FFFFFF',    // White - Secondary buttons, contrast elements
+    accent: '#EDEDED',       // Light Gray - Accent elements, subtle highlights
   },
 
-  // Text colors - optimized for dark backgrounds
+  // Text colors - professional navy and grays
   text: {
-    primary: '#FFFFFF',      // Pure white - Main text, headings
-    secondary: '#B0B0B0',    // Light gray - Muted text, descriptions
-    muted: '#6E6E6E',        // Darker gray - Disabled text, placeholders
-    inverse: '#121212',      // Deep black - Text on light backgrounds (rare)
+    primary: '#041E42',      // Navy blue - Main text, headings (professional tone)
+    secondary: '#6B7280',    // Medium gray - Muted text, descriptions
+    muted: '#9CA3AF',        // Light gray - Disabled text, placeholders
+    inverse: '#FFFFFF',      // White - Text on dark backgrounds
   },
 
-  // Background colors - dark IBM-inspired palette
+  // Background colors - clean white and light grays
   background: {
-    primary: '#121212',      // Deep black - Main page background
-    secondary: '#1C1C1E',    // Dark charcoal - Card backgrounds, panels
-    tertiary: '#2A2A2E',     // Secondary panel - Elevated surfaces, modals
-    elevated: '#333338',     // Higher elevation - Dropdowns, tooltips
+    primary: '#FFFFFF',      // White - Main page background (clean, academic)
+    secondary: '#F9FAFB',    // Very light gray - Card backgrounds, panels
+    tertiary: '#EDEDED',     // Light gray - Secondary panels, elevated surfaces
+    elevated: '#F3F4F6',     // Slightly darker light gray - Dropdowns, tooltips
   },
 
-  // Border colors - subtle dark theme borders
+  // Border colors - subtle light theme borders
   border: {
-    primary: '#2E2E2E',      // Subtle lines - Default borders, dividers
-    secondary: '#404040',    // Stronger borders - Focus states, emphasis
-    muted: '#1A1A1A',        // Very subtle - Light separators
-    focus: '#00E5FF',        // Teal focus - Focus rings and active borders
+    primary: '#E5E7EB',      // Light gray - Default borders, dividers
+    secondary: '#D1D5DB',    // Medium gray - Stronger borders, focus states
+    muted: '#F3F4F6',        // Very light gray - Subtle separators
+    focus: '#041E42',        // Navy focus - Focus rings and active borders
   },
 
-  // Status colors - muted with neon highlights
+  // Status colors - professional with light backgrounds
   status: {
-    success: '#00FF95',      // Neon green - Success messages, positive actions
-    warning: '#FFB74D',      // Amber - Warnings, caution states
-    error: '#FF5252',        // Crimson - Errors, destructive actions
-    info: '#2979FF',         // Cyan blue - Information, neutral alerts
+    success: '#059669',      // Emerald green - Success messages, positive actions
+    warning: '#D97706',      // Amber - Warnings, caution states
+    error: '#DC2626',        // Red - Errors, destructive actions
+    info: '#2563EB',         // Blue - Information, neutral alerts
     
-    // Muted versions for backgrounds
-    successMuted: '#0A2F1F', // Dark green background
-    warningMuted: '#2F2416', // Dark amber background
-    errorMuted: '#2F1616',   // Dark red background
-    infoMuted: '#16202F',    // Dark blue background
+    // Light versions for backgrounds
+    successMuted: '#ECFDF5', // Light green background
+    warningMuted: '#FFFBEB', // Light amber background
+    errorMuted: '#FEF2F2',   // Light red background
+    infoMuted: '#EFF6FF',    // Light blue background
   },
 
-  // Interactive states - with glow effects
+  // Interactive states - professional navy variations
   interactive: {
-    hover: '#00B8CC',        // Darker teal - Hover states for primary elements
-    active: '#009FB3',       // Even darker teal - Active/pressed states
-    disabled: '#404040',     // Dark gray - Disabled elements
-    focus: '#00E5FF',        // Bright teal - Focus ring color
-    glow: '#00E5FF40',       // Teal with opacity - Glow effects
+    hover: '#1E40AF',        // Darker blue - Hover states for navy elements
+    active: '#1E3A8A',       // Even darker blue - Active/pressed states
+    disabled: '#9CA3AF',     // Light gray - Disabled elements
+    focus: '#041E42',        // Navy focus - Focus ring color
+    glow: '#041E4220',       // Navy with opacity - Subtle glow effects
   },
 
-  // Gradient combinations - dark theme gradients
+  // Gradient combinations - professional light theme gradients
   gradients: {
-    primary: 'from-teal-400 to-cyan-400',        // Main brand gradient
-    secondary: 'from-blue-500 to-cyan-500',      // Secondary gradient
-    success: 'from-green-400 to-emerald-400',    // Success gradient
-    dark: 'from-gray-900 to-black',              // Dark background gradient
-    glow: 'from-teal-400/20 to-cyan-400/20',     // Subtle glow gradient
+    primary: 'from-blue-900 to-blue-800',        // Navy gradient for headers
+    secondary: 'from-gray-100 to-gray-200',      // Light gray gradient
+    success: 'from-emerald-500 to-green-600',    // Success gradient
+    accent: 'from-blue-50 to-gray-50',           // Subtle accent gradient
+    glow: 'from-blue-900/10 to-blue-800/10',     // Subtle navy glow gradient
   }
 } as const;
 
@@ -161,11 +162,12 @@ export const colors = {
 // ============================================================================
 
 export const typography = {
-  // Font families - IBM-inspired clean sans-serif
+  // Font families - Professional serif/sans-serif pairing
   fontFamily: {
-    sans: ['Inter', 'IBM Plex Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
-    mono: ['IBM Plex Mono', 'JetBrains Mono', 'Fira Code', 'ui-monospace', 'SFMono-Regular', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
-    display: ['Inter', 'IBM Plex Sans', 'system-ui', 'sans-serif'], // For headings and display text
+    sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
+    serif: ['Merriweather', 'Georgia', 'Cambria', 'Times New Roman', 'serif'],
+    mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'SFMono-Regular', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+    display: ['Merriweather', 'Georgia', 'serif'], // Serif headings for academic feel
   },
 
   // Font sizes - semantic naming for consistent hierarchy
@@ -302,18 +304,18 @@ export const borderRadius = {
 // ============================================================================
 
 export const shadows = {
-  // Subtle shadows for depth
+  // Professional shadows for light theme
   sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
   base: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
   md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1)',
   xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
   '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
 
-  // Custom branded shadows
-  soft: '0 10px 30px rgba(0,0,0,0.07)',           // Existing soft shadow
-  brand: '0 10px 30px rgba(79, 70, 229, 0.15)',  // Brand-colored shadow
-  glow: '0 0 20px rgba(79, 70, 229, 0.3)',       // Glow effect
+  // Custom branded shadows with navy accent
+  soft: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',           // Professional soft shadow
+  brand: '0 10px 15px -3px rgba(4, 30, 66, 0.1), 0 4px 6px -2px rgba(4, 30, 66, 0.05)',  // Navy brand shadow
+  glow: '0 0 20px rgba(4, 30, 66, 0.15)',       // Subtle navy glow effect
 
   // Inner shadows
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
@@ -363,12 +365,12 @@ export const animation = {
     scale: 'transform 200ms ease-out, box-shadow 200ms ease-out',
   },
 
-  // Glow effects for dark theme
+  // Glow effects for light theme with navy accent
   glow: {
-    sm: '0 0 10px rgba(0, 229, 255, 0.3)',
-    md: '0 0 20px rgba(0, 229, 255, 0.4)',
-    lg: '0 0 30px rgba(0, 229, 255, 0.5)',
-    xl: '0 0 40px rgba(0, 229, 255, 0.6)',
+    sm: '0 0 10px rgba(4, 30, 66, 0.1)',
+    md: '0 0 15px rgba(4, 30, 66, 0.15)',
+    lg: '0 0 25px rgba(4, 30, 66, 0.2)',
+    xl: '0 0 35px rgba(4, 30, 66, 0.25)',
   }
 } as const;
 
@@ -388,14 +390,14 @@ export const components = {
       xl: 'px-6 py-3.5 text-lg',
     },
 
-    // Style variants - dark theme optimized
+    // Style variants - light theme optimized
     variant: {
-      primary: 'bg-brand-primary text-background-primary hover:bg-interactive-hover hover:shadow-glow-md transition-glow font-medium',
-      secondary: 'border-2 border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-background-primary hover:shadow-glow-sm transition-glow',
+      primary: 'bg-brand-primary text-brand-secondary hover:bg-interactive-hover hover:shadow-glow-md transition-glow font-medium',
+      secondary: 'border-2 border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-brand-secondary hover:shadow-glow-sm transition-glow',
       outline: 'border border-border-primary text-text-primary hover:border-brand-primary hover:text-brand-primary hover:shadow-glow-sm transition-glow',
       ghost: 'text-text-secondary hover:text-brand-primary hover:bg-background-secondary transition-colors',
-      danger: 'bg-status-error text-text-primary hover:bg-red-600 hover:shadow-glow-sm transition-glow',
-      success: 'bg-status-success text-background-primary hover:bg-green-400 hover:shadow-glow-sm transition-glow',
+      danger: 'bg-status-error text-brand-secondary hover:bg-red-600 hover:shadow-glow-sm transition-glow',
+      success: 'bg-status-success text-brand-secondary hover:bg-green-400 hover:shadow-glow-sm transition-glow',
     }
   },
 
