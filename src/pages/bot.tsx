@@ -100,7 +100,7 @@ export default function BotPage() {
 
         {/* Main Content Area - Solid Background */}
         <div className="flex-1 flex overflow-hidden bg-gray-50">
-          <div className="flex-1 flex gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex-1 flex gap-6 max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {/* Centered Chat Container */}
             <div className="flex-1 max-w-3xl mx-auto flex flex-col">
               {/* Chat Frame - Minimal Design */}

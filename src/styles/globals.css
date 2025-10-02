@@ -1,0 +1,210 @@
+/* Import Inter font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Import IBM Plex Sans as fallback */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+/* Import IBM Plex Mono for code */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global dark theme enforcement */
+html {
+  color-scheme: dark;
+  background-color: #121212;
+}
+
+body {
+  background-color: #121212;
+  color: #FFFFFF;
+  font-family: 'Inter', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure all elements inherit dark theme */
+* {
+  border-color: #2E2E2E;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1C1C1E;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00E5FF;
+}
+
+/* Selection colors */
+::selection {
+  background-color: #00E5FF;
+  color: #121212;
+}
+
+::-moz-selection {
+  background-color: #00E5FF;
+  color: #121212;
+}
+
+/* Focus outline for accessibility */
+:focus-visible {
+  outline: 2px solid #00E5FF;
+  outline-offset: 2px;
+}
+
+/* Custom glow utilities */
+@layer utilities {
+  .glow-teal {
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+  }
+  
+  .glow-teal-lg {
+    box-shadow: 0 0 30px rgba(0, 229, 255, 0.5);
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+  }
+  
+  .border-glow {
+    border-color: #00E5FF;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+  }
+  
+  .transition-glow {
+    transition: box-shadow 200ms ease-in-out, border-color 200ms ease-in-out;
+  }
+}
+
+/* Animation classes */
+@layer components {
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+  }
+  
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite alternate;
+  }
+}
+
+/* Keyframes */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glow-pulse {
+  0% {
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
+  }
+}
+
+/* Disable light mode completely */
+@media (prefers-color-scheme: light) {
+  html, body {
+    background-color: #121212 !important;
+    color: #FFFFFF !important;
+  }
+}
+
+/* Form elements dark theme */
+input, textarea, select {
+  background-color: #2A2A2E;
+  border-color: #2E2E2E;
+  color: #FFFFFF;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6E6E6E;
+}
+
+/* Button focus states */
+button:focus-visible {
+  outline: 2px solid #00E5FF;
+  outline-offset: 2px;
+}
+
+/* Link styles */
+a {
+  color: #00E5FF;
+  transition: color 200ms ease-in-out;
+}
+
+a:hover {
+  color: #14F1D9;
+}
+
+/* Code blocks */
+code, pre {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', 'Fira Code', monospace;
+  background-color: #1C1C1E;
+  border: 1px solid #2E2E2E;
+}
+
+/* Ensure no light backgrounds leak through */
+.bg-white {
+  background-color: #1C1C1E !important;
+}
+
+.text-black {
+  color: #FFFFFF !important;
+}
+
+.border-gray-200, .border-gray-300 {
+  border-color: #2E2E2E !important;
+}
+
+/* Loading states */
+.loading {
+  background: linear-gradient(90deg, #1C1C1E 25%, #2A2A2E 50%, #1C1C1E 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

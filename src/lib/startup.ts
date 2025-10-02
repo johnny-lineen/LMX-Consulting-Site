@@ -23,7 +23,12 @@ export function initializeApp(): void {
   } catch (error) {
     console.error('❌ Application startup failed:');
     console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    
+    // Only exit in production - in development, the error should not reach here
+    // due to the new permissive validation
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
   }
 }
 

@@ -35,24 +35,40 @@ const optionalEnvVars = {
 
 /**
  * Validates and returns a required environment variable
- * Throws a clean error with instructions if missing
+ * - In PRODUCTION: Throws strict error if missing (fails build/startup)
+ * - In DEVELOPMENT: Returns empty string and logs warning (allows app to boot)
+ * 
+ * @param key - The environment variable key (must be in requiredEnvVars)
+ * @returns The environment variable value, or empty string in development if missing
  */
-function getRequiredEnvVar(key: keyof typeof requiredEnvVars): string {
+export function getRequiredEnvVar(key: keyof typeof requiredEnvVars): string {
   const value = process.env[key];
   
   if (!value) {
     const config = requiredEnvVars[key];
-    const errorMessage = [
-      `❌ Missing required environment variable: ${key}`,
-      `📝 Description: ${config.description}`,
-      `💡 Example: ${key}=${config.example}`,
-      `🔧 ${config.help}`,
-      '',
-      'For local development, create a .env.local file in your project root.',
-      'For production deployment, add this variable to your Vercel dashboard.'
-    ].join('\n');
+    const isDev = process.env.NODE_ENV === 'development';
     
-    throw new Error(errorMessage);
+    if (isDev) {
+      // In development: Log warning but don't crash
+      const warningMessage = [
+        `⚠️  Missing environment variable: ${key}`,
+        `📝 Description: ${config.description}`,
+        `💡 Example: ${key}=${config.example}`,
+        `🔧 ${config.help}`,
+        '',
+        '📁 Create a .env.local file in your project root with this variable.',
+        '🚀 The app will continue running but some features may not work.'
+      ].join('\n');
+      
+      console.warn(warningMessage);
+      console.warn(''); // Empty line for readability
+      
+      // Return empty string to allow app to continue
+      return '';
+    } else {
+      // In production: Throw strict error to fail build/startup
+      throw new Error(`Missing required environment variable: ${key}. Set this in your Vercel dashboard or deployment environment.`);
+    }
   }
   
   return value;
@@ -70,6 +86,8 @@ function getOptionalEnvVar<T extends keyof typeof optionalEnvVars>(
 
 /**
  * Environment configuration object with validated values
+ * In development, missing required vars will be empty strings with warnings
+ * In production, missing required vars will cause startup failure
  */
 export const config = {
   // Database
@@ -106,30 +124,66 @@ export const config = {
     appName: getOptionalEnvVar('NEXT_PUBLIC_APP_NAME'),
     appUrl: getOptionalEnvVar('NEXT_PUBLIC_APP_URL'),
     appDescription: getOptionalEnvVar('NEXT_PUBLIC_APP_DESCRIPTION')
+  },
+  
+  // Feature flags based on environment variable availability
+  features: {
+    database: hasRequiredEnvVar('MONGODB_URI'),
+    authentication: hasRequiredEnvVar('JWT_SECRET'),
+    aiChat: hasRequiredEnvVar('OPENAI_API_KEY')
   }
 } as const;
 
 /**
  * Validates all required environment variables on startup
- * Call this function early in your application lifecycle
+ * - In PRODUCTION: Strict validation - throws error if any required vars are missing
+ * - In DEVELOPMENT: Permissive validation - logs warnings but allows app to boot
  */
 export function validateEnvironment(): void {
-  try {
-    // This will throw if any required env vars are missing
-    Object.keys(requiredEnvVars).forEach(key => {
-      getRequiredEnvVar(key as keyof typeof requiredEnvVars);
-    });
-    
+  const missingVars: string[] = [];
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  // Check each required env var
+  Object.keys(requiredEnvVars).forEach(key => {
+    const value = process.env[key as keyof typeof requiredEnvVars];
+    if (!value) {
+      missingVars.push(key);
+    }
+  });
+  
+  if (missingVars.length > 0) {
+    if (isDev) {
+      // In development: Log summary but don't crash (individual warnings already logged by getRequiredEnvVar)
+      console.warn(`📋 Summary: ${missingVars.length} environment variable(s) missing: ${missingVars.join(', ')}`);
+      console.warn('🚀 App will continue running. Add missing variables to .env.local for full functionality.');
+      console.warn(''); // Empty line for readability
+    } else {
+      // In production: Throw error to fail startup
+      throw new Error(`Missing required environment variables: ${missingVars.join(', ')}. Set these in your Vercel dashboard or deployment environment.`);
+    }
+  } else {
     console.log('✅ All required environment variables are present');
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
   }
+}
+
+/**
+ * Checks if a required environment variable is available
+ * Useful for conditional feature enabling
+ * 
+ * @param key - The environment variable key
+ * @returns true if the variable has a non-empty value
+ */
+export function hasRequiredEnvVar(key: keyof typeof requiredEnvVars): boolean {
+  const value = process.env[key];
+  return Boolean(value && value.trim() !== '');
 }
 
 /**
  * Gets a client-safe environment variable
  * Only returns variables prefixed with NEXT_PUBLIC_
+ * 
+ * @param key - The environment variable key (must start with NEXT_PUBLIC_)
+ * @returns The environment variable value or undefined
  */
 export function getPublicEnvVar(key: string): string | undefined {
   if (!key.startsWith('NEXT_PUBLIC_')) {

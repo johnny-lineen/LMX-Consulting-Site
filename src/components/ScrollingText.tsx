@@ -28,16 +28,16 @@ export default function ScrollingText({ items }: { items: string[] }) {
     }, [])
 
     return (
-        <div className="overflow-hidden relative w-full border-t border-b py-4 bg-background">
+        <div className="overflow-hidden relative w-full border-t border-b border-border-primary py-6 bg-bg-secondary">
             <div
                 ref={ref}
-                className="flex whitespace-nowrap gap-8 text-lg font-medium text-primary"
+                className="flex whitespace-nowrap gap-8 text-lg font-medium text-brand-primary"
                 style={{ willChange: 'transform' }}
             >
                 {[...items, ...items].map((item, i) => (
-                    <span key={i} className="flex items-center gap-2">
+                    <span key={i} className="flex items-center gap-2 hover:text-glow transition-all duration-200">
                         {item}
-                        <span className="text-muted">â€¢</span>
+                        <span className="text-text-muted">•</span>
                     </span>
                 ))}
             </div>

@@ -6,15 +6,21 @@ Launch-ready scaffold for a consulting website with a **hero carousel**, **free 
 ## Quick Start
 
 ```bash
-# 1) Install
+# 1) Install dependencies
 npm install
 
-# 2) Run dev server
+# 2) Set up environment variables
+cp env.example .env.local
+# Edit .env.local with your actual values (see ENVIRONMENT_SETUP.md)
+
+# 3) Run dev server
 npm run dev
 
-# 3) Open
+# 4) Open
 http://localhost:3000
 ```
+
+> 📋 **Environment Setup**: See [`ENVIRONMENT_SETUP.md`](./ENVIRONMENT_SETUP.md) for detailed configuration instructions.
 
 ## Structure
 

@@ -28,8 +28,9 @@ export default function ConsultationPage() {
 
   return (
     <Layout title="Free Consultation Bot" description="Answer a few questions and receive a mini-report.">
-      <section className="container-px max-w-4xl mx-auto py-12 md:py-16">
-        <div className="text-center mb-12">
+      <section className="py-12 md:py-16">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Free Consultation Bot</h1>
           <p className="text-lg md:text-xl text-muted max-w-3xl mx-auto">
             Answer a few questions. We'll generate a mini-report and nudge you to book a 1:1 session.
@@ -110,6 +111,7 @@ export default function ConsultationPage() {
             </div>
           </div>
         )}
+        </div>
       </section>
     </Layout>
   )

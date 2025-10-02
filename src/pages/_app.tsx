@@ -1,5 +1,5 @@
 import type { AppProps } from 'next/app'
-import '@/../styles/globals.css'
+import '@/styles/globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 import { ConversationProvider } from '@/context/ConversationContext'
 

@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import brand from '@/lib/brand'
+import { brand } from '@/lib/theme'
 
 type Props = {
   title?: string
@@ -22,7 +22,7 @@ export default function Layout({ title, description, children }: Props) {
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
       </Head>
-      <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <div className="min-h-screen flex flex-col bg-bg-primary text-text-primary">
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

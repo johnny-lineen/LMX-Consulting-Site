@@ -13,7 +13,6 @@ export interface IUser {
 const UserSchema = new Schema<IUser>({
   email: { 
     type: String, 
-    unique: true, 
     required: [true, 'Email is required'],
     lowercase: true,
     trim: true

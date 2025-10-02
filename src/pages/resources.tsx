@@ -141,9 +141,10 @@ export default function ResourcesPage() {
                 title="Resources"
                 description="Premium toolkits and templates for your success."
             >
-                <section className="container-px max-w-7xl mx-auto py-12 md:py-16">
-                    {/* Header */}
-                    <div className="mb-8">
+                <section className="py-12 md:py-16">
+                    <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+                        {/* Header */}
+                        <div className="mb-8">
                         <h1 className="text-4xl font-bold">Resource Library</h1>
                         <p className="text-muted mt-2 text-lg">
                             Download valuable resources to boost your productivity and leverage AI effectively.
@@ -276,6 +277,7 @@ export default function ResourcesPage() {
                         resourceType={pendingResourceAccess?.resource.type || ''}
                         resourceId={pendingResourceAccess?.resource.id}
                     />
+                    </div>
                 </section>
             </Layout>
         </ProtectedRoute>

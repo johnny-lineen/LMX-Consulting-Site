@@ -593,7 +593,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
 
   return (
     <Layout title="Admin Panel" description="Resource Management">
-      <div className="container-px max-w-7xl mx-auto py-12 md:py-16">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Resource Management</h1>
           <p className="text-muted mt-2">
