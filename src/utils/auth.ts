@@ -2,11 +2,9 @@ import jwt from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { IUser } from '@/models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+import { config } from '@/lib/config';
 
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
+const JWT_SECRET = config.auth.jwtSecret;
 
 export interface JWTPayload {
   userId: string;
@@ -50,7 +48,7 @@ export function getTokenFromRequest(req: NextApiRequest): string | null {
 
 export function setTokenCookie(res: NextApiResponse, token: string) {
   res.setHeader('Set-Cookie', [
-    `token=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Strict; Secure=${process.env.NODE_ENV === 'production'}`
+    `token=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Strict; Secure=${config.auth.cookieSecure}`
   ]);
 }
 

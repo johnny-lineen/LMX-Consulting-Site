@@ -27,7 +27,15 @@ async function ensureAdminField() {
     console.log('═══════════════════════════════════════════════════\n');
 
     console.log('Connecting to MongoDB...');
-    await mongoose.connect(process.env.MONGODB_URI);
+    // Import config for environment validation
+    const { config } = require('../lib/config');
+    
+    // Validate environment before connecting
+    if (!config.database.uri) {
+      throw new Error('MONGODB_URI environment variable is required');
+    }
+    
+    await mongoose.connect(config.database.uri);
     console.log('✓ Connected successfully\n');
 
     // Count total users

@@ -1,11 +1,9 @@
 const { MongoClient } = require('mongodb');
 
-const MONGODB_URI = process.env.MONGODB_URI;
+// Import config for environment validation
+const { config } = require('../lib/config');
 
-if (!MONGODB_URI) {
-  console.error('MONGODB_URI environment variable is required');
-  process.exit(1);
-}
+const MONGODB_URI = config.database.uri;
 
 async function migrateCollections() {
   const client = new MongoClient(MONGODB_URI);

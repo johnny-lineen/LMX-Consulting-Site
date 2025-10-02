@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/utils/auth';
 import { connectDB } from '@/lib/mongodb';
 import { RESOURCE_TYPE_LABELS } from '@/lib/resourceTypeMapper';
+import { config } from '@/lib/config';
 import { User, IUser } from '@/models/User';
 import { Upload, FileText, Image, X, Check, AlertCircle, FolderOpen, Download, Search, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 
@@ -480,7 +481,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
         if (data.imported === 0 && data.skipped === 0) {
           setMessage({ 
             type: 'error', 
-            text: `No ZIP files found in desktop import folder.\n\nPlace ZIP files in: ${process.env.RESOURCE_IMPORT_PATH || 'Desktop/resources'}`
+            text: `No ZIP files found in desktop import folder.\n\nPlace ZIP files in: ${config.resources.importPath}`
           });
         } else if (data.imported === 0 && data.skipped > 0) {
           setMessage({ 
@@ -831,7 +832,7 @@ export default function AdminResourcesPage({ user }: AdminResourcesProps) {
               <div className="p-6 border-t bg-gray-50">
                 <p className="text-sm text-gray-600 text-center">
                   📁 Scanning from: <code className="text-xs bg-gray-200 px-2 py-1 rounded">
-                    {process.env.RESOURCE_IMPORT_PATH || 'C:/Users/jline/Desktop/Resources'}
+                    {config.resources.importPath}
                   </code>
                 </p>
               </div>

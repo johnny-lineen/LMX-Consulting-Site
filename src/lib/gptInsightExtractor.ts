@@ -1,10 +1,8 @@
 import { IConversationInsights } from '@/models/ConvoInsights';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+import { config } from './config';
 
-if (!OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY environment variable is required');
-}
+const OPENAI_API_KEY = config.ai.openaiApiKey;
 
 export interface GPTInsightResponse {
   advice: string[];

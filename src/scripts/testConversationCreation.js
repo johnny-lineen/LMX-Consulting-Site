@@ -12,8 +12,11 @@
 const { MongoClient } = require('mongodb');
 const { randomUUID } = require('crypto');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-const DB_NAME = process.env.MONGODB_DB || 'lmx-consulting';
+// Import config for environment validation
+const { config } = require('../lib/config');
+
+const MONGODB_URI = config.database.uri;
+const DB_NAME = config.database.name;
 
 async function testConversationCreation() {
   const client = new MongoClient(MONGODB_URI);

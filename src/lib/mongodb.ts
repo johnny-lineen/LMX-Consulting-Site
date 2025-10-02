@@ -1,10 +1,12 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
+import { config } from './config';
+import { initializeApp } from './startup';
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
-}
+// Initialize app and validate environment on first import
+initializeApp();
+
+const MONGODB_URI = config.database.uri;
 
 /**
  * Global is used here to maintain a cached connection across hot reloads

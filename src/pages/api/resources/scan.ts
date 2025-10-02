@@ -7,17 +7,12 @@ import fs from 'fs';
 import path from 'path';
 
 // Configurable base folder path with fallback
+import { config } from '@/lib/config';
+
 const getImportBasePath = (): string => {
-  const envPath = process.env.RESOURCE_IMPORT_PATH;
-  const defaultPath = 'C:/Users/jline/OneDrive/Desktop/resources';
-  
-  if (envPath) {
-    console.log('[SCAN] Using RESOURCE_IMPORT_PATH from environment:', envPath);
-    return envPath;
-  } else {
-    console.log('[SCAN] RESOURCE_IMPORT_PATH not set, using default desktop path:', defaultPath);
-    return defaultPath;
-  }
+  const importPath = config.resources.importPath;
+  console.log('[SCAN] Using import path:', importPath);
+  return importPath;
 };
 
 const DEFAULT_COVER_IMAGE = '/images/default-cover.svg';
@@ -372,7 +367,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   console.log('[SCAN API] ======================================');
   console.log('[SCAN API] Resource scan and import request received');
-  console.log('[SCAN API] Environment:', process.env.NODE_ENV);
+  console.log('[SCAN API] Environment:', config.app.nodeEnv);
   console.log('[SCAN API] Current working directory:', process.cwd());
   
   const IMPORT_BASE_FOLDER = getImportBasePath();

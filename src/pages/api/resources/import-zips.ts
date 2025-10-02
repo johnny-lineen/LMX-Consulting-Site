@@ -9,7 +9,9 @@ import { getDefaultCoverForFileType, getFileExtension } from '@/lib/coverImageHe
 import fs from 'fs';
 import path from 'path';
 
-const DESKTOP_IMPORT_PATH = process.env.RESOURCE_IMPORT_PATH || 'C:/Users/jline/OneDrive/Desktop/resources';
+import { config } from '@/lib/config';
+
+const DESKTOP_IMPORT_PATH = config.resources.importPath;
 const ARCHIVE_PATH = path.join(DESKTOP_IMPORT_PATH, 'archive');
 const PUBLIC_RESOURCES_PATH = path.join(process.cwd(), 'public', 'resources');
 const TEMP_EXTRACT_PATH = path.join(process.cwd(), 'temp', 'extracts');
